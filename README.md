@@ -26,7 +26,8 @@ serial_control/                        # = git 根 = colcon 工作区根
 │   │   ├── include/                   #    protocol.hpp / io_error.hpp / *_protocol.hpp / serial_port.hpp ...
 │   │   ├── src/                       #    协议 / 串口 / 配置 / 日志实现
 │   │   ├── examples/                  #    main.cpp 多设备并行控制示例（serial_hand_control_node）
-│   │   └── config/                    #    device_protocol_config.yaml、device_protocol_rh56f1_example.yaml、device_protocol_rh5dg2_example.yaml ...
+│   │   ├── config/                    #    device_protocol_config.yaml、device_protocol_rh56f1_example.yaml、device_protocol_rh5dg2_example.yaml ...
+│   │   └── tests/                     #    gtest 单元测试（RingBuffer / DeviceWorker / 三款 485 协议，不依赖硬件）
 │   ├── driver/                        # ② 功能包 inspire_control_ros2（find_package(inspire_serial_core)）
 │   │   ├── src/                       #    节点、RegisterController、机型适配器
 │   │   ├── include/

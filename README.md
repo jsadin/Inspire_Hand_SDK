@@ -1,5 +1,7 @@
 # 灵巧手控制系统（Inspire / ROS2）
 
+[![CI](https://github.com/jsadin/Inspire_Hand_SDK/actions/workflows/ci.yml/badge.svg)](https://github.com/jsadin/Inspire_Hand_SDK/actions/workflows/ci.yml)
+
 基于 C++ 与 ROS2 的多设备灵巧手控制系统，底层通过 RS485 / CANFD 等与多台 Inspire 系列灵巧手通信。节点包名为 **`inspire_control_ros2`**。
 
 ## 项目简介
@@ -11,6 +13,7 @@
 - ✅ **双通信模式**：支持话题（实时控制）和服务（按需调用）两种方式
 - ✅ **异步串口通信**：基于Boost.Asio的异步串口通信，支持超时和错误处理
 - ✅ **统一日志系统**：全局日志管理器，支持文件轮转和级别控制
+- ✅ **持续集成（CI）**：GitHub Actions 自动编译、跑单元测试与静态检查
 
 ## 项目结构
 
@@ -38,6 +41,8 @@ serial_control/                        # = git 根 = colcon 工作区根
 │       ├── RH56F1/                    #    rh56f1_interfaces（6 自由度）
 │       └── EG5CD1/                    #    eg5cd1_interfaces（EG-5CD1 夹爪）
 ├── docs/                              # 全部文档集中存放（架构/模块/依赖/协议规则/厂商手册）
+├── scripts/                           # CI 辅助脚本（clang-format / clang-tidy 检查）
+├── .github/workflows/                 # GitHub Actions CI 配置
 ├── install_dependencies.sh           # 依赖安装脚本（一键安装）
 ├── .gitignore
 └── README.md                         # 本文件
@@ -406,6 +411,26 @@ ctest --test-dir build --output-on-failure
 ```
 
 > 测试默认随核心库一起构建（CMake 选项 `INSPIRE_SERIAL_CORE_BUILD_TESTS=ON`）；若环境未安装 GTest（`libgtest-dev`），构建会自动跳过测试而不影响主库。关闭测试可加 `-DINSPIRE_SERIAL_CORE_BUILD_TESTS=OFF`。
+
+#### 持续集成（CI）
+
+每次向 `master`/`main` 分支 **push** 或发起 **Pull Request** 时，GitHub Actions 会自动执行（见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)）：
+
+| 步骤 | 内容 |
+|------|------|
+| `colcon build` | 编译整个工作区（5 个包） |
+| `colcon test` | 运行 `inspire_serial_core` 的 41 个 gtest 用例 |
+| `clang-format` | 校验 C++ 代码格式（规则见根目录 `.clang-format`） |
+| `clang-tidy` | 对核心库与驱动包做静态分析（规则见 `.clang-tidy`） |
+
+本地复现 CI 检查（需先 `colcon build --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`）：
+
+```bash
+./scripts/check_clang_format.sh
+./scripts/run_clang_tidy.sh
+```
+
+状态徽章见 README 顶部；详细运行日志在 GitHub 仓库的 **Actions** 页。
 
 ### 4. 配置设备
 

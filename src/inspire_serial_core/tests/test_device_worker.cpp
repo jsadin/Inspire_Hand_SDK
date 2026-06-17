@@ -59,7 +59,7 @@ TEST(DeviceWorkerTest, TasksNeverOverlap) {
     for (auto& f : futs) {
         f.get();
     }
-    EXPECT_EQ(max_concurrent.load(), 1);  // 单线程串行，最大并发恒为 1
+    EXPECT_EQ(max_concurrent.load(), 1); // 单线程串行，最大并发恒为 1
 }
 
 // 多线程并发 submit，所有任务都被执行且各自结果正确
@@ -93,7 +93,7 @@ TEST(DeviceWorkerTest, SubmitAfterStopThrows) {
     w.stop();
     EXPECT_FALSE(w.running());
     EXPECT_THROW(w.submit([]() { return 0; }), std::runtime_error);
-    EXPECT_NO_THROW(w.stop());  // 幂等
+    EXPECT_NO_THROW(w.stop()); // 幂等
 }
 
 // 析构时安全停止（不挂起）：构造后直接析构

@@ -32,14 +32,11 @@ public:
      * @brief 构造并启动工作线程。
      * @param name 设备名（用于线程内日志前缀，可空）。
      */
-    explicit DeviceWorker(std::string name = std::string())
-        : name_(std::move(name)) {
+    explicit DeviceWorker(std::string name = std::string()) : name_(std::move(name)) {
         thread_ = std::thread([this]() { runLoop(); });
     }
 
-    ~DeviceWorker() {
-        stop();
-    }
+    ~DeviceWorker() { stop(); }
 
     DeviceWorker(const DeviceWorker&) = delete;
     DeviceWorker& operator=(const DeviceWorker&) = delete;
@@ -54,8 +51,7 @@ public:
      * @param f 待执行任务。
      * @return std::future，承载任务返回值（或异常）。
      */
-    template <class F>
-    auto submit(F&& f) -> std::future<std::invoke_result_t<F>> {
+    template <class F> auto submit(F&& f) -> std::future<std::invoke_result_t<F>> {
         using Ret = std::invoke_result_t<F>;
 
         auto task = std::make_shared<std::packaged_task<Ret()>>(std::forward<F>(f));
@@ -106,9 +102,7 @@ private:
             std::function<void()> task;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
-                cv_.wait(lock, [this]() {
-                    return !running_.load() || !queue_.empty();
-                });
+                cv_.wait(lock, [this]() { return !running_.load() || !queue_.empty(); });
                 if (!running_.load() && queue_.empty()) {
                     return;
                 }

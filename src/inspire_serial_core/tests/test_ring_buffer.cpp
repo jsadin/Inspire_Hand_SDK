@@ -15,7 +15,7 @@ std::vector<uint8_t> popAll(RingBuffer& rb) {
     return out;
 }
 
-}  // namespace
+} // namespace
 
 // 新建缓冲区应为空
 TEST(RingBufferTest, NewBufferIsEmpty) {
@@ -93,7 +93,7 @@ TEST(RingBufferTest, OverwriteOldestWhenFull) {
     EXPECT_EQ(rb.size(), 4u);
 
     const uint8_t more[] = {5};
-    rb.push(more, 1);  // 覆盖最旧的 1
+    rb.push(more, 1); // 覆盖最旧的 1
     EXPECT_EQ(rb.size(), 4u);
 
     auto content = popAll(rb);
@@ -108,10 +108,10 @@ TEST(RingBufferTest, OverwriteOldestWhenFull) {
 TEST(RingBufferTest, ContiguousSizeAfterWrap) {
     RingBuffer rb(4);
     const uint8_t data[] = {1, 2, 3};
-    rb.push(data, 3);   // tail=0, head=3
-    rb.advance(2);      // tail=2, 剩余 {3}
+    rb.push(data, 3); // tail=0, head=3
+    rb.advance(2);    // tail=2, 剩余 {3}
     const uint8_t more[] = {4, 5};
-    rb.push(more, 2);   // 写入回绕：head 2->3->0
+    rb.push(more, 2); // 写入回绕：head 2->3->0
     EXPECT_EQ(rb.size(), 3u);
     // 从 tail=2 起到物理末尾(索引3)为连续段，长度 2
     EXPECT_EQ(rb.contiguousDataSize(), 2u);

@@ -19,15 +19,15 @@
 struct WriteStep {
     std::string reg;
     std::vector<int> values;
-    int post_delay_ms = 0;  ///< 本步写完后的等待时长（在 worker 线程上 sleep）
+    int post_delay_ms = 0; ///< 本步写完后的等待时长（在 worker 线程上 sleep）
 };
 
 /**
  * @brief 组合写序列结果。error==IoError::Ok 表示全部成功；否则 failed_step 指出失败步序号。
  */
 struct SequenceResult {
-    size_t failed_step = 0;          ///< 失败步在序列中的下标（error!=Ok 时有效）
-    IoError error = IoError::Ok;     ///< 第一个失败步的错误码；Ok 表示整组成功
+    size_t failed_step = 0;      ///< 失败步在序列中的下标（error!=Ok 时有效）
+    IoError error = IoError::Ok; ///< 第一个失败步的错误码；Ok 表示整组成功
 
     bool ok() const { return error == IoError::Ok; }
 };
@@ -47,11 +47,9 @@ public:
     /** @brief 服务/订阅回调应归入的回调组（与定时器分组以实现并发）。 */
     virtual rclcpp::CallbackGroup::SharedPtr ioServiceCallbackGroup() = 0;
 
-    virtual RegisterReadResult ioReadRegister(
-        const std::string& register_name, size_t length = 0) = 0;
+    virtual RegisterReadResult ioReadRegister(const std::string& register_name, size_t length = 0) = 0;
 
-    virtual IoError ioWriteRegister(
-        const std::string& register_name, const std::vector<int>& values) = 0;
+    virtual IoError ioWriteRegister(const std::string& register_name, const std::vector<int>& values) = 0;
 
     /**
      * @brief 原子化执行一组写步骤（遇到第一个失败即停止）。

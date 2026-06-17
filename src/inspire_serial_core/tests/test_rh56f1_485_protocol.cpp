@@ -17,7 +17,7 @@ RH56F1_485_Protocol makeProto() {
     return p;
 }
 
-}  // namespace
+} // namespace
 
 // 寄存器名 -> 地址 映射
 TEST(RH56F1Protocol, RegisterAddressLookup) {
@@ -30,19 +30,18 @@ TEST(RH56F1Protocol, RegisterAddressLookup) {
 // 读命令字节序列正确（含帧头、ID、命令、地址小端、长度、校验和）
 TEST(RH56F1Protocol, BuildReadCommand) {
     auto p = makeProto();
-    auto cmd = p.buildReadCommand(1064, 12);  // angleAct
-    std::vector<uint8_t> expected = withChecksum(
-        {0xEB, 0x90, 0x01, 0x04, 0x11, 0x28, 0x04, 0x0C});
+    auto cmd = p.buildReadCommand(1064, 12); // angleAct
+    std::vector<uint8_t> expected = withChecksum({0xEB, 0x90, 0x01, 0x04, 0x11, 0x28, 0x04, 0x0C});
     EXPECT_EQ(cmd, expected);
 }
 
 // 写命令字节序列正确（数据长度字段 = 值个数*2+3，数据小端序）
 TEST(RH56F1Protocol, BuildWriteCommand) {
     auto p = makeProto();
-    auto cmd = p.buildWriteCommand(1040, {100, -1});  // angleSet
+    auto cmd = p.buildWriteCommand(1040, {100, -1}); // angleSet
     std::vector<uint8_t> body = {0xEB, 0x90, 0x01, 0x07, 0x12, 0x10, 0x04};
-    pushLE16(body, 100);  // 0x64 0x00
-    pushLE16(body, -1);   // 0xFF 0xFF
+    pushLE16(body, 100); // 0x64 0x00
+    pushLE16(body, -1);  // 0xFF 0xFF
     EXPECT_EQ(cmd, withChecksum(body));
 }
 
@@ -59,7 +58,7 @@ TEST(RH56F1Protocol, ValidateChecksum) {
     auto frame = withChecksum({0x90, 0xEB, 0x01, 0x07, 0x11, 0x28, 0x04, 0x64, 0x00, 0xFF, 0xFF});
     EXPECT_TRUE(p.validateChecksum(frame));
 
-    frame.back() ^= 0xFF;  // 篡改校验和
+    frame.back() ^= 0xFF; // 篡改校验和
     EXPECT_FALSE(p.validateChecksum(frame));
 }
 
@@ -87,7 +86,7 @@ TEST(RH56F1Protocol, ParseResponseSkipsLeadingGarbage) {
     pushLE16(body, 777);
     auto frame = withChecksum(body);
 
-    std::vector<uint8_t> stream = {0xAA, 0xBB, 0x00};  // 噪声前缀
+    std::vector<uint8_t> stream = {0xAA, 0xBB, 0x00}; // 噪声前缀
     stream.insert(stream.end(), frame.begin(), frame.end());
 
     RingBuffer rb(64);
@@ -115,7 +114,7 @@ TEST(RH56F1Protocol, ParseResponseRejectsBadChecksum) {
     std::vector<uint8_t> body = {0x90, 0xEB, 0x01, 0x05, 0x11, 0x28, 0x04};
     pushLE16(body, 123);
     auto frame = withChecksum(body);
-    frame.back() ^= 0xFF;  // 破坏校验和
+    frame.back() ^= 0xFF; // 破坏校验和
 
     RingBuffer rb(64);
     rb.push(frame.data(), frame.size());
@@ -125,8 +124,8 @@ TEST(RH56F1Protocol, ParseResponseRejectsBadChecksum) {
 
 // ID 不匹配时拒绝解析
 TEST(RH56F1Protocol, ParseResponseRejectsIdMismatch) {
-    auto p = makeProto();  // device id = 1
-    std::vector<uint8_t> body = {0x90, 0xEB, 0x09, 0x05, 0x11, 0x28, 0x04};  // ID=9
+    auto p = makeProto();                                                   // device id = 1
+    std::vector<uint8_t> body = {0x90, 0xEB, 0x09, 0x05, 0x11, 0x28, 0x04}; // ID=9
     pushLE16(body, 123);
     auto frame = withChecksum(body);
 

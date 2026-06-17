@@ -12,21 +12,18 @@
 #include "device_worker.hpp"
 #include "interface_adapter.hpp"
 #include "protocol.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "register_io_backend.hpp"
 #include "ring_buffer.hpp"
 #include "serial_port.hpp"
-#include "rclcpp/rclcpp.hpp"
 
 /**
  * @brief 设备节点：定时循环读写寄存器；ROS 消息/服务类型由 InterfaceAdapter 按产品线实现。
  */
 class RegisterController : public rclcpp::Node, public IRegisterIoBackend {
 public:
-    RegisterController(
-        const std::string& node_name,
-        const DeviceNodeConfig& config,
-        std::shared_ptr<SerialPortBase> device,
-        std::shared_ptr<Protocol> protocol);
+    RegisterController(const std::string& node_name, const DeviceNodeConfig& config,
+                       std::shared_ptr<SerialPortBase> device, std::shared_ptr<Protocol> protocol);
 
     ~RegisterController() override;
 
@@ -39,15 +36,11 @@ public:
     // --- IRegisterIoBackend ---
     rclcpp::Node* ioNode() override { return this; }
 
-    rclcpp::CallbackGroup::SharedPtr ioServiceCallbackGroup() override {
-        return service_cb_group_;
-    }
+    rclcpp::CallbackGroup::SharedPtr ioServiceCallbackGroup() override { return service_cb_group_; }
 
-    RegisterReadResult ioReadRegister(
-        const std::string& register_name, size_t length = 0) override;
+    RegisterReadResult ioReadRegister(const std::string& register_name, size_t length = 0) override;
 
-    IoError ioWriteRegister(
-        const std::string& register_name, const std::vector<int>& values) override;
+    IoError ioWriteRegister(const std::string& register_name, const std::vector<int>& values) override;
 
     SequenceResult ioWriteSequence(const std::vector<WriteStep>& steps) override;
 

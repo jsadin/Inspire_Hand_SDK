@@ -5,18 +5,10 @@
 #include <thread>
 #include <utility>
 
-RegisterController::RegisterController(
-    const std::string& node_name,
-    const DeviceNodeConfig& config,
-    std::shared_ptr<SerialPortBase> device,
-    std::shared_ptr<Protocol> protocol)
-    : rclcpp::Node(node_name),
-      config_(config),
-      device_(device),
-      protocol_(protocol),
-      ring_buffer_(std::make_unique<RingBuffer>(1024)),
-      worker_(std::make_unique<DeviceWorker>(config.device_name))
-{
+RegisterController::RegisterController(const std::string& node_name, const DeviceNodeConfig& config,
+                                       std::shared_ptr<SerialPortBase> device, std::shared_ptr<Protocol> protocol)
+    : rclcpp::Node(node_name), config_(config), device_(device), protocol_(protocol),
+      ring_buffer_(std::make_unique<RingBuffer>(1024)), worker_(std::make_unique<DeviceWorker>(config.device_name)) {
     LoggerManager::setThreadDeviceName(config_.device_name);
 
     // 定时器与服务/订阅分到不同回调组：定时器组互斥（同一时刻仅一个读任务在排队），
@@ -26,9 +18,8 @@ RegisterController::RegisterController(
     service_cb_group_ = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
     auto logger = getLogger();
-    logger->info("[{}] RegisterController创建: device={}, profile={}, topics={}, services={}",
-        node_name, config_.device_name, config_.interfaces_profile,
-        config_.topics.size(), config_.services.size());
+    logger->info("[{}] RegisterController创建: device={}, profile={}, topics={}, services={}", node_name,
+                 config_.device_name, config_.interfaces_profile, config_.topics.size(), config_.services.size());
 }
 
 RegisterController::~RegisterController() {
@@ -44,8 +35,7 @@ RegisterController::~RegisterController() {
 
 void RegisterController::initialize() {
     auto logger = getLogger();
-    logger->info("[{}] 初始化设备节点 (interfaces_profile={})...", get_name(),
-        config_.interfaces_profile);
+    logger->info("[{}] 初始化设备节点 (interfaces_profile={})...", get_name(), config_.interfaces_profile);
 
     RosEntityMaps maps{publishers_, subscribers_, services_};
     interface_adapter_ = makeInterfaceAdapter(config_.interfaces_profile, *this, config_, maps);
@@ -68,17 +58,12 @@ void RegisterController::start() {
 
     running_.store(true);
 
-    auto period = std::chrono::milliseconds(
-        static_cast<int>(1000.0 / config_.update_rate));
+    auto period = std::chrono::milliseconds(static_cast<int>(1000.0 / config_.update_rate));
 
-    control_timer_ = create_wall_timer(
-        period,
-        std::bind(&RegisterController::timerCallback, this),
-        timer_cb_group_);
+    control_timer_ = create_wall_timer(period, std::bind(&RegisterController::timerCallback, this), timer_cb_group_);
 
     auto logger = getLogger();
-    logger->info("[{}] 设备节点已启动，更新频率: {} Hz",
-        get_name(), config_.update_rate);
+    logger->info("[{}] 设备节点已启动，更新频率: {} Hz", get_name(), config_.update_rate);
 }
 
 void RegisterController::stop() {
@@ -136,8 +121,7 @@ void RegisterController::controlLoop() {
             if (reg_name == "touchAct") {
                 auto touchResult = readTouchData(topic_config.touch_version);
                 if (touchResult.ok()) {
-                    interface_adapter_->publishTouchData(
-                        topic_config, touchResult.data, topic_config.touch_version);
+                    interface_adapter_->publishTouchData(topic_config, touchResult.data, topic_config.touch_version);
                 }
             } else {
                 auto readResult = readRegister(reg_name);
@@ -151,32 +135,24 @@ void RegisterController::controlLoop() {
 
 // 以下三个 raw 助手仅在 worker 线程上执行（由 ioXxx / controlLoop 调用），
 // 直接访问 device_/ring_buffer_/protocol_，无需额外加锁。事务起始清空串口 RX 残留。
-RegisterReadResult RegisterController::readRegister(
-    const std::string& reg_name,
-    size_t length)
-{
+RegisterReadResult RegisterController::readRegister(const std::string& reg_name, size_t length) {
     try {
         device_->clearBuffer();
         return protocol_->readRegister(device_, *ring_buffer_, reg_name, length);
     } catch (const std::exception& e) {
         auto logger = getLogger();
-        logger->error("[{}] 读取寄存器 {} 失败: {}",
-            get_name(), reg_name, e.what());
+        logger->error("[{}] 读取寄存器 {} 失败: {}", get_name(), reg_name, e.what());
         return {IoError::DeviceError, {}};
     }
 }
 
-IoError RegisterController::writeRegister(
-    const std::string& reg_name,
-    const std::vector<int>& values)
-{
+IoError RegisterController::writeRegister(const std::string& reg_name, const std::vector<int>& values) {
     try {
         device_->clearBuffer();
         return protocol_->writeRegister(device_, reg_name, values);
     } catch (const std::exception& e) {
         auto logger = getLogger();
-        logger->error("[{}] 写入寄存器 {} 失败: {}",
-            get_name(), reg_name, e.what());
+        logger->error("[{}] 写入寄存器 {} 失败: {}", get_name(), reg_name, e.what());
         return IoError::DeviceError;
     }
 }
@@ -192,15 +168,9 @@ TouchReadResult RegisterController::readTouchData(int version) {
     }
 }
 
-RegisterReadResult RegisterController::ioReadRegister(
-    const std::string& register_name,
-    size_t length)
-{
+RegisterReadResult RegisterController::ioReadRegister(const std::string& register_name, size_t length) {
     try {
-        return worker_->submit(
-            [this, register_name, length]() {
-                return readRegister(register_name, length);
-            }).get();
+        return worker_->submit([this, register_name, length]() { return readRegister(register_name, length); }).get();
     } catch (const std::exception& e) {
         auto logger = getLogger();
         logger->error("[{}] 读取寄存器 {} 任务失败: {}", get_name(), register_name, e.what());
@@ -208,15 +178,9 @@ RegisterReadResult RegisterController::ioReadRegister(
     }
 }
 
-IoError RegisterController::ioWriteRegister(
-    const std::string& register_name,
-    const std::vector<int>& values)
-{
+IoError RegisterController::ioWriteRegister(const std::string& register_name, const std::vector<int>& values) {
     try {
-        return worker_->submit(
-            [this, register_name, values]() {
-                return writeRegister(register_name, values);
-            }).get();
+        return worker_->submit([this, register_name, values]() { return writeRegister(register_name, values); }).get();
     } catch (const std::exception& e) {
         auto logger = getLogger();
         logger->error("[{}] 写入寄存器 {} 任务失败: {}", get_name(), register_name, e.what());
@@ -226,8 +190,8 @@ IoError RegisterController::ioWriteRegister(
 
 SequenceResult RegisterController::ioWriteSequence(const std::vector<WriteStep>& steps) {
     try {
-        return worker_->submit(
-            [this, steps]() -> SequenceResult {
+        return worker_
+            ->submit([this, steps]() -> SequenceResult {
                 SequenceResult result;
                 for (size_t i = 0; i < steps.size(); ++i) {
                     const auto& step = steps[i];
@@ -238,12 +202,12 @@ SequenceResult RegisterController::ioWriteSequence(const std::vector<WriteStep>&
                         return result;
                     }
                     if (step.post_delay_ms > 0) {
-                        std::this_thread::sleep_for(
-                            std::chrono::milliseconds(step.post_delay_ms));
+                        std::this_thread::sleep_for(std::chrono::milliseconds(step.post_delay_ms));
                     }
                 }
-                return result;  // error 默认 Ok
-            }).get();
+                return result; // error 默认 Ok
+            })
+            .get();
     } catch (const std::exception& e) {
         auto logger = getLogger();
         logger->error("[{}] 组合写序列任务失败: {}", get_name(), e.what());
@@ -253,10 +217,7 @@ SequenceResult RegisterController::ioWriteSequence(const std::vector<WriteStep>&
 
 TouchReadResult RegisterController::ioReadTouchData(int version) {
     try {
-        return worker_->submit(
-            [this, version]() {
-                return readTouchData(version);
-            }).get();
+        return worker_->submit([this, version]() { return readTouchData(version); }).get();
     } catch (const std::exception& e) {
         auto logger = getLogger();
         logger->error("[{}] 读取触觉数据任务失败: {}", get_name(), e.what());
@@ -264,10 +225,6 @@ TouchReadResult RegisterController::ioReadTouchData(int version) {
     }
 }
 
-int32_t RegisterController::ioHandId() const {
-    return static_cast<int32_t>(protocol_->getDeviceId());
-}
+int32_t RegisterController::ioHandId() const { return static_cast<int32_t>(protocol_->getDeviceId()); }
 
-std::string RegisterController::ioNodeName() const {
-    return std::string(get_name());
-}
+std::string RegisterController::ioNodeName() const { return std::string(get_name()); }

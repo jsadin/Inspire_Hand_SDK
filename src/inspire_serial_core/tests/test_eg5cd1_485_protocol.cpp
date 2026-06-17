@@ -23,7 +23,7 @@ EG5CD1_485_Protocol makeProto() {
     return p;
 }
 
-}  // namespace
+} // namespace
 
 // 寄存器名 -> 地址 映射
 TEST(EG5CD1Protocol, RegisterAddressLookup) {
@@ -36,18 +36,16 @@ TEST(EG5CD1Protocol, RegisterAddressLookup) {
 // 读命令字节序列正确（读命令 0x00）
 TEST(EG5CD1Protocol, BuildReadCommand) {
     auto p = makeProto();
-    auto cmd = p.buildReadCommand(1120, 14);  // gripperStatusBlock, 一次读 14 字节
-    std::vector<uint8_t> expected = withChecksum(
-        {kHdr0, kHdr1, 0x01, 0x04, 0x00, 0x60, 0x04, 0x0E});
+    auto cmd = p.buildReadCommand(1120, 14); // gripperStatusBlock, 一次读 14 字节
+    std::vector<uint8_t> expected = withChecksum({kHdr0, kHdr1, 0x01, 0x04, 0x00, 0x60, 0x04, 0x0E});
     EXPECT_EQ(cmd, expected);
 }
 
 // 写单值命令（数据长度字段 = 3 + 值个数*2，写命令 0x01）
 TEST(EG5CD1Protocol, BuildWriteCommandSingleValue) {
     auto p = makeProto();
-    auto cmd = p.buildWriteCommand(1020, {500});  // openLenSet
-    std::vector<uint8_t> body = {kHdr0, kHdr1, 0x01,
-                                 static_cast<uint8_t>(3 + 1 * 2), 0x01, 0xFC, 0x03};
+    auto cmd = p.buildWriteCommand(1020, {500}); // openLenSet
+    std::vector<uint8_t> body = {kHdr0, kHdr1, 0x01, static_cast<uint8_t>(3 + 1 * 2), 0x01, 0xFC, 0x03};
     pushLE16(body, 500);
     EXPECT_EQ(cmd, withChecksum(body));
 }
@@ -56,8 +54,7 @@ TEST(EG5CD1Protocol, BuildWriteCommandSingleValue) {
 TEST(EG5CD1Protocol, BuildWriteCommandTwoValues) {
     auto p = makeProto();
     auto cmd = p.buildWriteCommand(1020, {300, 400});
-    std::vector<uint8_t> body = {kHdr0, kHdr1, 0x01,
-                                 static_cast<uint8_t>(3 + 2 * 2), 0x01, 0xFC, 0x03};
+    std::vector<uint8_t> body = {kHdr0, kHdr1, 0x01, static_cast<uint8_t>(3 + 2 * 2), 0x01, 0xFC, 0x03};
     pushLE16(body, 300);
     pushLE16(body, 400);
     EXPECT_EQ(cmd, withChecksum(body));
@@ -86,7 +83,7 @@ TEST(EG5CD1Protocol, ValidateChecksum) {
 TEST(EG5CD1Protocol, ParseReadResponse) {
     auto p = makeProto();
     std::vector<uint8_t> body = {kRespHdr0, kRespHdr1, 0x01, 0x05, 0x00, 0x62, 0x04};
-    pushLE16(body, 1234);  // openLenAct
+    pushLE16(body, 1234); // openLenAct
     auto frame = withChecksum(body);
 
     RingBuffer rb(64);
@@ -100,9 +97,8 @@ TEST(EG5CD1Protocol, ParseReadResponse) {
 // 解析读回复：多值 + 负数还原
 TEST(EG5CD1Protocol, ParseReadResponseBlock) {
     auto p = makeProto();
-    std::vector<int> expected_vals = {10, -5, 1000, 0, 250, 32000, -2000};  // 7 个值=14 字节
-    std::vector<uint8_t> body = {kRespHdr0, kRespHdr1, 0x01,
-                                 static_cast<uint8_t>(14 + 3), 0x00, 0x60, 0x04};
+    std::vector<int> expected_vals = {10, -5, 1000, 0, 250, 32000, -2000}; // 7 个值=14 字节
+    std::vector<uint8_t> body = {kRespHdr0, kRespHdr1, 0x01, static_cast<uint8_t>(14 + 3), 0x00, 0x60, 0x04};
     for (int v : expected_vals) {
         pushLE16(body, v);
     }

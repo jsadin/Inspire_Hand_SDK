@@ -28,6 +28,7 @@
 
 ### P3 — 质量 / 功能
 - [x] 补单元测试（gtest）：覆盖 `RingBuffer`（push/pop/advance/越界/覆盖/回绕）、`DeviceWorker`（FIFO/串行不交叠/多线程并发提交/异常透传/停后提交/析构安全）与 RH56F1 / RH5DG2 / EG5CD1 三个 485 协议的 `buildReadCommand`/`buildWriteCommand`/`parseResponse`/`validateChecksum`。共 41 个用例，`colcon test` 全绿。代码在 `src/inspire_serial_core/tests/`。
+- [x] **接入 CI**：GitHub Actions（`.github/workflows/ci.yml`）在 push/PR 时自动执行 `colcon build` + `colcon test`（inspire_serial_core 41 用例）+ `clang-format` + `clang-tidy`；本地可运行 `scripts/check_clang_format.sh`、`scripts/run_clang_tidy.sh`。
 
 ---
 
@@ -42,13 +43,10 @@
 - [ ] **补 EG-5CD1 的 CANFD 通道**
   - 现状：夹爪目前仅有 485；核里仅有 `RH56F1_canfd` / `RH5DG2_canfd`，缺 `EG5CD1_canfd`。
 
-- [ ] **接入 CI**
-  - 内容：`colcon build` + 运行测试 + `clang-format` / `clang-tidy`。
-
 ---
 
 ## 优先级建议
 
 1. ~~先搭 **P3 单元测试**~~ ✅ 已完成（纯逻辑已有回归兜底）。
 2. ~~**P2 串口并发重构**~~ ✅ 已完成（worker 串行化 + 双回调组并发）。
-3. 其余 P3 功能项（触觉 v2、EG-5CD1 CANFD、CI）按需推进；CI 现已具备 `colcon test` 基础，接入相对容易。
+3. 其余 P3 功能项（触觉 v2、EG-5CD1 CANFD）按需推进。

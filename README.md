@@ -803,6 +803,40 @@ echo $PKG_CONFIG_PATH
 export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 ```
 
+## 与上游仓库同步（Git）
+
+本目录已是 **Git 仓库根目录**，可直接在此开发，无需再使用隐藏的 `.safe_push_repo`。
+
+| 远程名 | 地址 | 含义 |
+|--------|------|------|
+| **upstream** | `https://github.com/jsadin/Inspire_Hand_SDK.git` | 原作者仓库 |
+| **origin** | `https://github.com/qs-wq/Inspire_Hand_SDK.git` | 你的 fork |
+
+### 日常：检查作者有没有新更新
+
+```bash
+cd /home/qs/Inspire_Hand_SDK-master
+
+git fetch upstream
+git log master..upstream/master   # 无输出 = 没有新东西，不用动
+```
+
+### 有更新时：合并到本地
+
+```bash
+git merge upstream/master
+```
+
+### 提交你的改动到自己的 fork
+
+```bash
+git add -A
+git commit -m "说明本次改了什么"
+git push origin master
+```
+
+> 历史遗留的 `.safe_push_repo`、`.push_sync_repo` 等临时文件夹已从工作区删除，并在 `.gitignore` 中忽略。
+
 ## 扩展开发
 
 ### 添加新协议

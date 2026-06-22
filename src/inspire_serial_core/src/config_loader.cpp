@@ -1,31 +1,29 @@
 #include "config_loader.hpp"
+#include "logger_manager.hpp" // 使用日志管理器
 #include "protocol.hpp"
-#include "protocol_factory.hpp"  // 使用协议工厂
-#include "logger_manager.hpp"    // 使用日志管理器
-#include <yaml-cpp/yaml.h>
+#include "protocol_factory.hpp" // 使用协议工厂
 #include <stdexcept>
+#include <yaml-cpp/yaml.h>
 
-YAML::Node ConfigLoader::loadYAMLConfig(const std::string& path) {
-    return YAML::LoadFile(path);
-}
+YAML::Node ConfigLoader::loadYAMLConfig(const std::string& path) { return YAML::LoadFile(path); }
 
 std::unordered_map<std::string, DeviceInfo> ConfigLoader::loadDeviceConfig(const std::string& config_path) {
     std::unordered_map<std::string, DeviceInfo> config;
     YAML::Node node = loadYAMLConfig(config_path);
-    
+
     // 加载配置
     if (node["devices"]) {
         for (const auto& device : node["devices"]) {
             std::string name = device["name"].as<std::string>();
             std::string port = device["port"].as<std::string>();
-            int baudrate = device["baudrate"].as<int>();  
-            
+            int baudrate = device["baudrate"].as<int>();
+
             // 读取设备ID（Hand_ID），可选字段，默认值为1
             int hand_id = 1;
             if (device["Hand_ID"]) {
                 hand_id = device["Hand_ID"].as<int>();
             }
-            
+
             DeviceInfo info;
             info.name = name;
             info.baudrate = baudrate;
@@ -35,39 +33,39 @@ std::unordered_map<std::string, DeviceInfo> ConfigLoader::loadDeviceConfig(const
             config[port] = info;
         }
     }
-    
+
     return config;
 }
 
 std::shared_ptr<Protocol> ConfigLoader::createProtocolFromConfig(const std::string& config_path) {
     YAML::Node node = loadYAMLConfig(config_path);
-    
+
     // 根据配置创建协议对象
     if (node["protocol"] && node["protocol"]["type"]) {
         std::string protocol_type = node["protocol"]["type"].as<std::string>();
-        
+
         // 使用工厂模式创建协议对象，支持动态扩展
         // 新协议只需注册即可，无需修改此处代码
         try {
             return ProtocolFactory::create(protocol_type);
         } catch (const std::exception& e) {
             // 错误信息：无法创建协议
-            throw std::runtime_error("Failed to create protocol '" + protocol_type + 
-                                    "': " + e.what() + 
-                                    ". Available types: " + 
-                                    [&protocol_type]() {
-                                        auto types = ProtocolFactory::getRegisteredTypes();
-                                        if (types.empty()) return std::string("(none registered)");
-                                        std::string result;
-                                        for (const auto& t : types) {
-                                            if (!result.empty()) result += ", ";
-                                            result += t;
-                                        }
-                                        return result;
-                                    }());
+            throw std::runtime_error("Failed to create protocol '" + protocol_type + "': " + e.what() +
+                                     ". Available types: " + [&protocol_type]() {
+                                         auto types = ProtocolFactory::getRegisteredTypes();
+                                         if (types.empty())
+                                             return std::string("(none registered)");
+                                         std::string result;
+                                         for (const auto& t : types) {
+                                             if (!result.empty())
+                                                 result += ", ";
+                                             result += t;
+                                         }
+                                         return result;
+                                     }());
         }
     }
-    
+
     throw std::runtime_error("Invalid protocol configuration: missing protocol type");
 }
 

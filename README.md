@@ -868,38 +868,6 @@ echo $PKG_CONFIG_PATH
 export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 ```
 
-## 与上游仓库同步（Git）
-
-本目录即 **Git 仓库根目录**，可直接在此开发。
-
-| 远程名 | 地址 | 含义 |
-|--------|------|------|
-| **upstream** | `https://github.com/jsadin/Inspire_Hand_SDK.git` | 原作者仓库 |
-| **origin** | `https://github.com/qs-wq/Inspire_Hand_SDK.git` | 你的 fork |
-
-### 日常：检查作者有没有新更新
-
-```bash
-cd /home/qs/Inspire_Hand_SDK-master
-
-git fetch upstream
-git log master..upstream/master   # 无输出 = 没有新东西，不用动
-```
-
-### 有更新时：合并到本地
-
-```bash
-git merge upstream/master
-```
-
-### 提交你的改动到自己的 fork
-
-```bash
-git add -A
-git commit -m "说明本次改了什么"
-git push origin master
-```
-
 ## 扩展开发
 
 ### 添加新协议
@@ -926,4 +894,4 @@ git push origin master
 
 **文档版本**：v1.2  
 **上游基线**：作者 `jsadin/Inspire_Hand_SDK` v1.1（2026-06-17，提交 `8da3b29`）已全部合并  
-**最后更新**：2026-06-22（含 RH56DFX 扩展与 Git 同步说明）
+**最后更新**：2026-06-22（含 RH56DFX 扩展说明）

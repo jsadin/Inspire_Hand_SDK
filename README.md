@@ -386,9 +386,49 @@ source install/setup.bash
 裸库是纯 CMake 包，可脱离 ROS 单独构建（含 `serial_hand_control_node` 示例）：
 
 ```bash
-cd /home/ubuntu/serial_control/src/inspire_serial_core
+cd src/inspire_serial_core
 cmake -S . -B build && cmake --build build -j
 ```
+
+#### 纯 C++ 控制灵巧手（无 ROS）
+
+同一程序 `serial_hand_control_node` 通过 YAML 切换机型，**运行时**指定角度，无需改源码重编译：
+
+| 参数 | 说明 |
+|------|------|
+| `--config` / `-c` | 设备协议 YAML（如 `config/device_protocol_rh56dfx_example.yaml`） |
+| `--angles v1,v2,...` | 固定角度，逗号分隔（RH56DFX/RH56F1=6 个，RH5DG2=13 个） |
+| `--angles-file <path>` | 从文件读取一行角度（逗号或空格分隔） |
+| `--demo` | 自动开合演示（默认，未指定 `--angles` 时） |
+| `--read-only` | 只读 `angleAct`，不写 `angleSet` |
+
+```bash
+cd src/inspire_serial_core
+
+# 自动演示（默认）
+./build/serial_hand_control_node --config config/device_protocol_rh56dfx_example.yaml
+
+# 握拳：六个关节固定角度（RH56DFX）
+./build/serial_hand_control_node -c config/device_protocol_rh56dfx_example.yaml \
+  --angles 1000,1000,1000,1000,1200,1800
+
+# 从文件读角度（方便脚本反复调用）
+echo "1800,1800,1800,1800,1350,1800" > /tmp/hand_pose.txt
+./build/serial_hand_control_node -c config/device_protocol_rh56dfx_example.yaml \
+  --angles-file /tmp/hand_pose.txt
+
+# 只读当前角度
+./build/serial_hand_control_node -c config/device_protocol_rh56dfx_example.yaml --read-only
+```
+
+快捷脚本（机型别名 + 透传额外参数）：
+
+```bash
+./scripts/run_cpp_hand.sh rh56dfx --angles 1000,1000,1000,1000,1200,1800
+./scripts/run_cpp_hand.sh rh56dfx --read-only
+```
+
+> 需要 ROS 话题/服务控制时，请使用 `inspire_control_ros2` 节点；纯 C++ 版适合无 ROS 环境或快速真机验证。
 
 #### 运行单元测试
 
@@ -894,4 +934,4 @@ export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 
 **文档版本**：v1.2  
 **上游基线**：作者 `jsadin/Inspire_Hand_SDK` v1.1（2026-06-17，提交 `8da3b29`）已全部合并  
-**最后更新**：2026-06-22（含 RH56DFX 扩展说明）
+**最后更新**：2026-06-23（纯 C++ 节点支持 `--angles` 运行时控制）

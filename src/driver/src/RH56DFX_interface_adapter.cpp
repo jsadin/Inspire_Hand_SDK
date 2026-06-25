@@ -9,6 +9,9 @@
 #include <rh56dfx_interfaces/msg/set_force1.hpp>
 #include <rh56dfx_interfaces/msg/get_force_act1.hpp>
 #include <rh56dfx_interfaces/msg/set_speed1.hpp>
+#include <rh56dfx_interfaces/msg/set_current1.hpp>
+#include <rh56dfx_interfaces/msg/get_current_act1.hpp>
+#include <rh56dfx_interfaces/msg/touch_data1.hpp>
 
 #include <rh56dfx_interfaces/srv/setangle.hpp>
 #include <rh56dfx_interfaces/srv/setforce.hpp>
@@ -39,6 +42,32 @@ void stamp_header(std_msgs::msg::Header& h, rclcpp::Node* node, const std::strin
     h.frame_id = frame_id;
 }
 
+// 触觉数据 → 消息（与 RH5DG2 对齐）。RH56DFX 无触觉硬件，此函数仅在
+// 极少数收到有效触觉帧时才被调用；常态下定时读 touchAct 返回 NotSupported，
+// 不会触发发布，话题存在但无数据。
+void touch_to_msg(const TouchDataResult& touchData, rh56dfx_interfaces::msg::TouchData1& msg) {
+    static const char* kFingerOrder[] = {"little", "ring", "middle", "index", "thumb"};
+    for (size_t i = 0; i < 5; ++i) {
+        auto it = touchData.fingerResults.find(kFingerOrder[i]);
+        if (it != touchData.fingerResults.end() && it->second.size() >= 4) {
+            msg.finger_forces[i] = static_cast<int32_t>(it->second[0]);
+            msg.finger_tangentials[i] = static_cast<int32_t>(it->second[1]);
+            msg.finger_angles[i] = static_cast<int32_t>(it->second[2]);
+            msg.finger_proximity[i] = static_cast<int32_t>(it->second[3]);
+        } else {
+            msg.finger_forces[i] = 0;
+            msg.finger_tangentials[i] = 0;
+            msg.finger_angles[i] = 0;
+            msg.finger_proximity[i] = 0;
+        }
+    }
+    for (int i = 1; i <= 9; ++i) {
+        std::string palm_key = "palm_data_" + std::to_string(i);
+        auto it = touchData.palmResults.find(palm_key);
+        msg.palm_data[i - 1] = (it != touchData.palmResults.end()) ? static_cast<int32_t>(it->second) : 0;
+    }
+}
+
 }  // namespace
 
 void RH56DFXInterfaceAdapter::wireTopics() {
@@ -56,6 +85,17 @@ void RH56DFXInterfaceAdapter::wireTopics() {
                 maps_.publishers[tc.state_topic] = node->create_publisher<rh56dfx_interfaces::msg::GetForceAct1>(
                     tc.state_topic, 10);
                 logger->info("[{}] Publisher(GetForceAct1): {}", backend_.ioNodeName(), tc.state_topic);
+            } else if (tc.name == "current_control") {
+                // 接口占位：RH56DFX 无电流读寄存器（currentAct 属 NOT_SUPPORTED），
+                // 话题会创建（topic list 可见），但定时读返回 NotSupported 故不发布数据。
+                maps_.publishers[tc.state_topic] = node->create_publisher<rh56dfx_interfaces::msg::GetCurrentAct1>(
+                    tc.state_topic, 10);
+                logger->info("[{}] Publisher(GetCurrentAct1): {}", backend_.ioNodeName(), tc.state_topic);
+            } else if (tc.name == "touch_control") {
+                // 接口占位：RH56DFX 无触觉硬件（touchAct 属 NOT_SUPPORTED），同上。
+                maps_.publishers[tc.state_topic] = node->create_publisher<rh56dfx_interfaces::msg::TouchData1>(
+                    tc.state_topic, 10);
+                logger->info("[{}] Publisher(TouchData1): {}", backend_.ioNodeName(), tc.state_topic);
             }
         }
 
@@ -100,6 +140,21 @@ void RH56DFXInterfaceAdapter::wireTopics() {
                         backend_.ioWriteRegister(reg, vals);
                     });
                 logger->info("[{}] Subscriber(SetSpeed1): {}", backend_.ioNodeName(), tc.command_topic);
+            } else if (tc.name == "current_control") {
+                // 接口占位：订阅器存在（topic list 可见），收到命令写 currentSet 返回
+                // NotSupported，仅记录日志、不影响其它通道。
+                maps_.subscribers[tc.command_topic] = makeGroupedSubscription<rh56dfx_interfaces::msg::SetCurrent1>(
+                    tc.command_topic, 10,
+                    [this, reg, hid](rh56dfx_interfaces::msg::SetCurrent1::SharedPtr msg) {
+                        if (!rosIncomingHandIdTargetsThisNode(backend_, msg->hand_id)) {
+                            getLogger()->warn("[{}] 忽略 SetCurrent1: hand_id={}（本节点 Hand_ID={}）",
+                                backend_.ioNodeName(), msg->hand_id, hid);
+                            return;
+                        }
+                        std::vector<int> vals(msg->joint_values.begin(), msg->joint_values.end());
+                        backend_.ioWriteRegister(reg, vals);
+                    });
+                logger->info("[{}] Subscriber(SetCurrent1): {}", backend_.ioNodeName(), tc.command_topic);
             }
         }
     }
@@ -143,6 +198,25 @@ void RH56DFXInterfaceAdapter::publishRegisterData(
             msg.joint_names[i] = configuredJointName(config_.joint_names, i);
         }
         pub->publish(msg);
+        return;
+    }
+
+    if (topic_config.name == "current_control") {
+        // 接口占位：常态下 currentAct 读返回 NotSupported，本函数不会被调用；
+        // 仅当未来补上 CAN 地址、真能读到电流时才发布。
+        auto pub = std::dynamic_pointer_cast<rclcpp::Publisher<rh56dfx_interfaces::msg::GetCurrentAct1>>(
+            maps_.publishers[topic_config.state_topic]);
+        if (!pub) {
+            return;
+        }
+        rh56dfx_interfaces::msg::GetCurrentAct1 msg;
+        stamp_header(msg.header, node, config_.publish_frame_id);
+        msg.hand_id = hid;
+        for (size_t i = 0; i < kRH56DFXJoints; ++i) {
+            msg.joint_values[i] = (i < values.size()) ? static_cast<int32_t>(values[i]) : 0;
+            msg.joint_names[i] = configuredJointName(config_.joint_names, i);
+        }
+        pub->publish(msg);
     }
 }
 
@@ -151,9 +225,19 @@ void RH56DFXInterfaceAdapter::publishTouchData(
     const TouchDataResult& touchData,
     int version)
 {
-    (void)topic_config;
-    (void)touchData;
+    // 接口占位：RH56DFX 无触觉硬件，常态下 touchAct 读返回 NotSupported，本函数不会被调用。
+    // 保留完整发布逻辑，便于未来若接入触觉硬件可直接生效。
     (void)version;
+    rclcpp::Node* node = backend_.ioNode();
+    auto pub = std::dynamic_pointer_cast<rclcpp::Publisher<rh56dfx_interfaces::msg::TouchData1>>(
+        maps_.publishers[topic_config.state_topic]);
+    if (!pub) {
+        return;
+    }
+    rh56dfx_interfaces::msg::TouchData1 msg;
+    stamp_header(msg.header, node, config_.publish_frame_id);
+    touch_to_msg(touchData, msg);
+    pub->publish(msg);
 }
 
 void RH56DFXInterfaceAdapter::wireServices() {

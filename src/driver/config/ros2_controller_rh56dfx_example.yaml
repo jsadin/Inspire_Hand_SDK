@@ -38,6 +38,21 @@ device_nodes:
           write: ["speedSet"]
         command_topic: "/hand_left/speed_set"
 
+      # 电流控制话题（接口占位：RH56DFX 无电流寄存器，话题可见但无数据/写入 not_supported）
+      - name: current_control
+        registers:
+          write: ["currentSet"]
+          read: ["currentAct"]
+        command_topic: "/hand_left/current_set"
+        state_topic: "/hand_left/current_actual"
+
+      # 触觉数据话题（接口占位：RH56DFX 无触觉硬件，话题可见但无数据）
+      - name: touch_control
+        registers:
+          read: ["touchAct"]
+        state_topic: "/hand_left/touch_data"
+        touch_version: 1
+
     services:
       - register_name: "angleSet"
         set_service_name: "/hand_left/set_angle"

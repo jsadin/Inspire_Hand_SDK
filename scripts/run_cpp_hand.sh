@@ -5,6 +5,8 @@
 #   ./scripts/run_cpp_hand.sh rh56dfx
 #   ./scripts/run_cpp_hand.sh rh5dg2
 #   ./scripts/run_cpp_hand.sh rh56f1
+#   ./scripts/run_cpp_hand.sh rh56h1
+#   ./scripts/run_cpp_hand.sh rh56h1_canfd
 #   ./scripts/run_cpp_hand.sh config/device_protocol_rh56dfx_example.yaml
 #   ./scripts/run_cpp_hand.sh rh56dfx --angles 1000,1000,1000,1000,1200,1800
 #   ./scripts/run_cpp_hand.sh rh56dfx --read-only
@@ -16,7 +18,7 @@ set -euo pipefail
 
 PROFILE="${1:-}"
 if [[ -z "$PROFILE" ]]; then
-    echo "用法: $0 <rh56dfx|rh5dg2|rh56f1|yaml路径> [serial_hand_control_node 额外参数...]" >&2
+    echo "用法: $0 <rh56dfx|rh5dg2|rh56f1|rh56h1|rh56h1_canfd|yaml路径> [serial_hand_control_node 额外参数...]" >&2
     exit 1
 fi
 shift || true
@@ -32,6 +34,8 @@ case "$PROFILE" in
     rh56dfx) CONFIG="$CONFIG_DIR/device_protocol_rh56dfx_example.yaml" ;;
     rh5dg2)  CONFIG="$CONFIG_DIR/device_protocol_rh5dg2_example.yaml" ;;
     rh56f1)  CONFIG="$CONFIG_DIR/device_protocol_rh56f1_example.yaml" ;;
+    rh56h1)  CONFIG="$CONFIG_DIR/device_protocol_rh56h1_example.yaml" ;;
+    rh56h1_canfd) CONFIG="$CONFIG_DIR/device_protocol_rh56h1_canfd_example.yaml" ;;
     eg5cd1)  CONFIG="$CONFIG_DIR/device_protocol_eg5cd1_example.yaml" ;;
     *)
         if [[ -f "$PROFILE" ]]; then

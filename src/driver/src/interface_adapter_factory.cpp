@@ -3,6 +3,7 @@
 #include "RH5DG2_interface_adapter.hpp"
 #include "RH56DFX_interface_adapter.hpp"
 #include "RH56F1_interface_adapter.hpp"
+#include "RH56H1_interface_adapter.hpp"
 
 std::unique_ptr<InterfaceAdapter> makeInterfaceAdapter(
     const std::string& interfaces_profile,
@@ -12,6 +13,9 @@ std::unique_ptr<InterfaceAdapter> makeInterfaceAdapter(
 {
     if (interfaces_profile == "RH56F1") {
         return std::make_unique<RH56F1InterfaceAdapter>(backend, config, maps);
+    }
+    if (interfaces_profile == "RH56H1") {
+        return std::make_unique<RH56H1InterfaceAdapter>(backend, config, maps);
     }
     if (interfaces_profile == "RH56DFX") {
         return std::make_unique<RH56DFXInterfaceAdapter>(backend, config, maps);

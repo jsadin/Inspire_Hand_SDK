@@ -46,8 +46,10 @@ bool isFingerSeriesRegister(const std::string& reg_name) {
            reg_name == "angleSet" ||
            reg_name == "forceSet" ||
            reg_name == "speedSet" ||
+           reg_name == "currentSet" ||
            reg_name == "angleAct" ||
            reg_name == "forceAct" ||
+           reg_name == "currentAct" ||
            reg_name == "errorCode" ||
            reg_name == "status" ||
            reg_name == "temp";
@@ -77,12 +79,14 @@ const std::map<std::string, int> RH56DFX_serial_can_Protocol::REGISTER_MAP = {
     {"baudRate", 4008},          // REDU_RATIO
     {"clearError", 4016},        // CLEAR_ERROR
     {"save", 4020},              // SAVE
+    {"currentSet", 1020},        // CURRENT_LIMIT(m)，各自由度电流保护阈值（mA）
     {"posSet", 1474},
     {"angleSet", 1486},
     {"forceSet", 1498},
     {"speedSet", 1522},
     {"angleAct", 1546},
     {"forceAct", 1582},
+    {"currentAct", 1594},        // CURRENT(m)，各自由度执行器实际电流（mA，只读）
     {"errorCode", 1606},
     {"status", 1612},
     {"temp", 1618},
@@ -96,12 +100,14 @@ const std::map<std::string, size_t> RH56DFX_serial_can_Protocol::REGISTER_READ_L
     {"baudRate", 1},
     {"clearError", 1},
     {"save", 1},
+    {"currentSet", 12},
     {"posSet", 12},
     {"angleSet", 12},
     {"forceSet", 12},
     {"speedSet", 12},
     {"angleAct", 12},
     {"forceAct", 12},
+    {"currentAct", 12},
     {"errorCode", 12},
     {"status", 12},
     {"temp", 12},
@@ -115,6 +121,7 @@ RH56DFX_serial_can_Protocol::REGISTER_WRITE_RULE_MAP = {
     {"baudRate", {1, 1}},
     {"clearError", {1, 1}},
     {"save", {1, 1}},
+    {"currentSet", {2, 6}},
     {"posSet", {2, 6}},
     {"angleSet", {2, 6}},
     {"forceSet", {2, 6}},
@@ -126,11 +133,9 @@ RH56DFX_serial_can_Protocol::REGISTER_WRITE_RULE_MAP = {
 const std::set<std::string> RH56DFX_serial_can_Protocol::NOT_SUPPORTED_REGISTERS = {
     "resetPara",
     "gestureForceClb",
-    "currentSet",
     "defaultSpeedSet",
     "defaultForceSet",
     "posAct",
-    "currentAct",
     "mode",
     "pause",
     "stop",

@@ -36,7 +36,7 @@ device_nodes:
           write: ["speedSet"]
         command_topic: "/hand_left/speed_set"
 
-      # 电流控制话题（接口占位：RH56DFX 无电流寄存器，话题可见但无数据/写入 not_supported）
+      # 电流控制话题（currentSet=1020 CURRENT_LIMIT，currentAct=1594 CURRENT）
       - name: current_control
         registers:
           write: ["currentSet"]

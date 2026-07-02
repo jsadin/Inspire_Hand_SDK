@@ -24,10 +24,12 @@ add_library(inspire_serial_core SHARED
     src/device_manager.cpp
     src/ring_buffer.cpp
     src/RH56F1_485_protocol.cpp
+    src/RH56H1_485_protocol.cpp
     src/RH56DFX_serial_can_protocol.cpp
     src/RH5DG2_485_protocol.cpp
     src/EG5CD1_485_protocol.cpp
     src/RH56F1_canfd_protocol.cpp
+    src/RH56H1_canfd_protocol.cpp
     src/RH5DG2_canfd_protocol.cpp
     src/config_loader.cpp
     src/protocol_factory.cpp

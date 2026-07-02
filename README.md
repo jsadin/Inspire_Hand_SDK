@@ -8,7 +8,7 @@
 
 本项目是一个模块化的灵巧手控制系统，支持：
 - ✅ **多设备支持**：同时控制多个灵巧手设备（如左手、右手）
-- ✅ **多协议支持**：通过工厂模式支持多种通信协议（RH56F1_485、**RH56DFX_serial_can**、RH5DG2_485、EG5CD1_485 等）
+- ✅ **多协议支持**：通过工厂模式支持多种通信协议（RH56F1_485、**RH56H1_485** / **RH56H1_canfd**、**RH56DFX_serial_can**、RH5DG2_485、EG5CD1_485 等）
 - ✅ **动态配置**：通过 YAML 配置设备协议与 ROS2 话题/服务
 - ✅ **双通信模式**：支持话题（实时控制）和服务（按需调用）两种方式
 - ✅ **异步串口通信**：基于Boost.Asio的异步串口通信，支持超时和错误处理
@@ -55,13 +55,15 @@ serial_control/                        # = git 根 = colcon 工作区根
 
 | 包名 | 作用 |
 |------|------|
-| **inspire_control_ros2** | 节点与驱动逻辑：`inspire_control_node`、`RegisterController`、`RH5DG2InterfaceAdapter` / `RH56F1InterfaceAdapter` / **`RH56DFXInterfaceAdapter`** / **`EG5CD1InterfaceAdapter`**，配置文件安装在 `share/inspire_control_ros2/config`。 |
+| **inspire_control_ros2** | 节点与驱动逻辑：`inspire_control_node`、`RegisterController`、`RH5DG2InterfaceAdapter` / `RH56F1InterfaceAdapter` / **`RH56H1InterfaceAdapter`** / **`RH56DFXInterfaceAdapter`** / **`EG5CD1InterfaceAdapter`**，配置文件安装在 `share/inspire_control_ros2/config`。 |
 | **rh5dg2_interfaces** | RH5DG2（13 自由度）专用 `msg`/`srv`，例如 `SetAngle1`、`GetAngleAct1`、`Setforce`、`Geterror` 等。 |
 | **rh56f1_interfaces** | RH56 系列（6 自由度）专用 `msg`/`srv`。 |
-| **rh56dfx_interfaces** | RH56DFX Serial-CAN 灵巧手专用 `msg`/`srv`，**服务集已与 RH5DG2/RH56F1 完全对齐**（`Setangle`/`Setforce`/`Setspeed`/`Setid`/`Setbaudrate`/`Setclearerror`/`Setactionseqindex`/`Geterror`/`Getstatus`/`Gettemp` 等底层已支持；`Setmode`/`Setpause`/`Setstop`/`Setresetpara`/`Setgestureforceclb`/`Setactionlibraryindex` 为**接口对齐占位**——厂商 CAN 文档暂未提供这些寄存器地址，调用返回 `not_supported`，补地址后即生效；另含 DFX 特有 `Setsave`）。同时补齐 `SetCurrent1`/`GetCurrentAct1`/`TouchData1` 话题类型用于接口对齐，其中 `currentSet/currentAct/touchAct` 在 RH56DFX 上为占位能力：话题可见但常态不发布数据、写入返回 `not_supported`。 |
+| **rh56dfx_interfaces** | RH56DFX Serial-CAN 灵巧手专用 `msg`/`srv`，**服务集已与 RH5DG2/RH56F1 完全对齐**（`Setangle`/`Setforce`/`Setspeed`/`Setid`/`Setbaudrate`/`Setclearerror`/`Setactionseqindex`/`Geterror`/`Getstatus`/`Gettemp` 等底层已支持；`Setmode`/`Setpause`/`Setstop`/`Setresetpara`/`Setgestureforceclb`/`Setactionlibraryindex` 为**接口对齐占位**——厂商 CAN 文档暂未提供这些寄存器地址，调用返回 `not_supported`，补地址后即生效；另含 DFX 特有 `Setsave`）。电流话题 `SetCurrent1`/`GetCurrentAct1` 已映射至 CAN 寄存器 `currentSet`（1020 `CURRENT_LIMIT`）与 `currentAct`（1594 `CURRENT`）；`touchAct` 仍为占位（无触觉硬件）。 |
 | **eg5cd1_interfaces** | **因时 EG-5CD1** 电动夹爪 RS485：`GripperState`、`SetInt32`、`TriggerForHand`、`SetInt32Value`、`GetScalarForHand`；**组合服务** `ForceModeGrasp` / `ForceModeOpen` / `TouchModeGrasp` / `TouchModeOpen`（仅 `hand_id`+`speed`+`force`，内部按文档顺序经 `ioWriteSequence` 在设备 `DeviceWorker` 上**原子串行**写寄存器，见下）。 |
 
-在 **`device_protocol_config.yaml`** 中设置 **`protocol.type`**（如 **`RH5DG2_485`**、**`RH56F1_485`**、**`RH56DFX_serial_can`**、**`EG5CD1_485`** 等），启动时自动推导 **`interfaces_profile`**（`RH5DG2` / `RH56F1` / **`RH56DFX`** / **`EG5CD1`**）并创建对应适配器。
+在 **`device_protocol_config.yaml`** 中设置 **`protocol.type`**（如 **`RH5DG2_485`**、**`RH56F1_485`**、**`RH56H1_485`** / **`RH56H1_canfd`**、**`RH56DFX_serial_can`**、**`EG5CD1_485`** 等），启动时自动推导 **`interfaces_profile`**（`RH5DG2` / `RH56F1` / **`RH56H1`** / **`RH56DFX`** / **`EG5CD1`**）并创建对应适配器。
+
+**RH56H1** 与 **RH56F1** 寄存器与帧格式相同，支持 **485** 与 **CAN-FD** 两种 `protocol.type`；ROS 接口复用 **`rh56f1_interfaces`**。触觉传感器类型不同，后续在 `RH56H1_485_Protocol` / `RH56H1_canfd_Protocol` 及 `RH56H1_interface_adapter` 中单独适配。
 
 ### EG-5CD1 夹爪全链路说明
 
@@ -397,7 +399,7 @@ cmake -S . -B build && cmake --build build -j
 | 参数 | 说明 |
 |------|------|
 | `--config` / `-c` | 设备协议 YAML（如 `config/device_protocol_rh56dfx_example.yaml`） |
-| `--angles v1,v2,...` | 固定角度，逗号分隔（RH56DFX/RH56F1=6 个，RH5DG2=13 个） |
+| `--angles v1,v2,...` | 固定角度，逗号分隔（RH56DFX/RH56F1/RH56H1=6 个，RH5DG2=13 个） |
 | `--angles-file <path>` | 从文件读取一行角度（逗号或空格分隔） |
 | `--demo` | 自动开合演示（默认，未指定 `--angles` 时） |
 | `--read-only` | 只读 `angleAct`，不写 `angleSet` |
@@ -506,7 +508,7 @@ ros2 launch inspire_control_ros2 inspire_control_multi_device.launch.py
 
 ### 6. 使用示例
 
-以下示例假定 **`protocol.type`** 为 RH5DG2 系列（**13** 个关节）。若为 **RH56F1** 系列，请将包名改为 **`rh56f1_interfaces`**，且 **`joint_values` 长度为 6**。也可用 `ros2 interface show <包名>/<类型>` 查看字段。
+以下示例假定 **`protocol.type`** 为 RH5DG2 系列（**13** 个关节）。若为 **RH56F1** / **RH56H1** 系列，请将包名改为 **`rh56f1_interfaces`**，且 **`joint_values` 长度为 6**。也可用 `ros2 interface show <包名>/<类型>` 查看字段。
 
 **`hand_id` 与节点绑定**：入站 Topic/Service 中的 **`hand_id`** 须与 **`device_protocol_config.yaml`** 里该设备的 **`Hand_ID`** 一致，否则节点会拒绝写寄存器（`accepted: false`）或忽略订阅回调；**`hand_id: 0`** 视为未指定，仍会被本节点接受（兼容不指定id）。
 
@@ -730,7 +732,7 @@ device_nodes:
       frame_id: "hand_left"
     joint_names:
       - "hand_left/joint_0"
-      # ... 共 13 项（RH5DG2）或 6 项（RH56F1）
+      # ... 共 13 项（RH5DG2）或 6 项（RH56F1 / RH56H1）
 
     topics:
       - name: angle_control

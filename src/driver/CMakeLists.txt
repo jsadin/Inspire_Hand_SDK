@@ -26,6 +26,7 @@ add_executable(inspire_control_node
     src/interface_adapter_factory.cpp
     src/RH5DG2_interface_adapter.cpp
     src/RH56F1_interface_adapter.cpp
+    src/RH56H1_interface_adapter.cpp
     src/RH56DFX_interface_adapter.cpp
     src/EG5CD1_interface_adapter.cpp
     src/inspire_controller_factory.cpp

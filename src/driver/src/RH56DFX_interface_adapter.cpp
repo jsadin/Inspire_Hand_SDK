@@ -86,8 +86,6 @@ void RH56DFXInterfaceAdapter::wireTopics() {
                     tc.state_topic, 10);
                 logger->info("[{}] Publisher(GetForceAct1): {}", backend_.ioNodeName(), tc.state_topic);
             } else if (tc.name == "current_control") {
-                // 接口占位：RH56DFX 无电流读寄存器（currentAct 属 NOT_SUPPORTED），
-                // 话题会创建（topic list 可见），但定时读返回 NotSupported 故不发布数据。
                 maps_.publishers[tc.state_topic] = node->create_publisher<rh56dfx_interfaces::msg::GetCurrentAct1>(
                     tc.state_topic, 10);
                 logger->info("[{}] Publisher(GetCurrentAct1): {}", backend_.ioNodeName(), tc.state_topic);
@@ -141,8 +139,6 @@ void RH56DFXInterfaceAdapter::wireTopics() {
                     });
                 logger->info("[{}] Subscriber(SetSpeed1): {}", backend_.ioNodeName(), tc.command_topic);
             } else if (tc.name == "current_control") {
-                // 接口占位：订阅器存在（topic list 可见），收到命令写 currentSet 返回
-                // NotSupported，仅记录日志、不影响其它通道。
                 maps_.subscribers[tc.command_topic] = makeGroupedSubscription<rh56dfx_interfaces::msg::SetCurrent1>(
                     tc.command_topic, 10,
                     [this, reg, hid](rh56dfx_interfaces::msg::SetCurrent1::SharedPtr msg) {
@@ -202,8 +198,6 @@ void RH56DFXInterfaceAdapter::publishRegisterData(
     }
 
     if (topic_config.name == "current_control") {
-        // 接口占位：常态下 currentAct 读返回 NotSupported，本函数不会被调用；
-        // 仅当未来补上 CAN 地址、真能读到电流时才发布。
         auto pub = std::dynamic_pointer_cast<rclcpp::Publisher<rh56dfx_interfaces::msg::GetCurrentAct1>>(
             maps_.publishers[topic_config.state_topic]);
         if (!pub) {

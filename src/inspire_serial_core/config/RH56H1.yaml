@@ -1,8 +1,6 @@
-# RH56DFX Serial-CAN 示例配置
-# 串口由 USB-CAN 转接器提供，默认 115200
-
+# RH56H1 设备协议配置（与 RH56F1 寄存器一致）
 protocol:
-  type: RH56DFX_serial_can
+  type: RH56H1_485
 
 devices:
   - name: hand_left
@@ -11,10 +9,9 @@ devices:
     Hand_ID: 1
 
 logging:
-  level: INFO
+  level: ERROR
   file: logs/hand_control.log
   console: true
   file_enable: true
   max_file_size_mb: 10
   max_files: 5
-

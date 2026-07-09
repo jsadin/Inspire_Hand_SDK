@@ -31,6 +31,7 @@ serial_hand_control_node
 inspire_control_node
 
 # --- 运行时日志 ---
+.ros_log/
 *.log
 *.log.*
 

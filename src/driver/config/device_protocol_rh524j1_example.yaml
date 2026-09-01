@@ -1,0 +1,20 @@
+# RH524J1（065 腱绳驱动 24 自由度灵巧手）RS485 设备配置
+# 配合 ros2_controller_rh524j1_example.yaml；单设备模式启动：--device hand_left
+# 寄存器地址见 065demo/hand_param.h，帧格式同 RH5DG2_485（EB 90）
+
+protocol:
+  type: RH524J1_485
+
+devices:
+  - name: hand_left
+    port: /dev/ttyUSB0
+    baudrate: 115200
+    Hand_ID: 1
+
+logging:
+  level: INFO
+  file: logs/rh524j1_hand.log
+  console: true
+  file_enable: true
+  max_file_size_mb: 10
+  max_files: 5

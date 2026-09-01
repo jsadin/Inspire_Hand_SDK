@@ -1,4 +1,6 @@
+#include "EG2_4C2_interface_adapter.hpp"
 #include "EG5CD1_interface_adapter.hpp"
+#include "RH524J1_interface_adapter.hpp"
 #include "RH56DFX_interface_adapter.hpp"
 #include "RH56F1_interface_adapter.hpp"
 #include "RH56H1_interface_adapter.hpp"
@@ -19,6 +21,12 @@ std::unique_ptr<InterfaceAdapter> makeInterfaceAdapter(const std::string& interf
     }
     if (interfaces_profile == "EG5CD1") {
         return std::make_unique<EG5CD1InterfaceAdapter>(backend, config, maps);
+    }
+    if (interfaces_profile == "EG2_4C2") {
+        return std::make_unique<EG2_4C2InterfaceAdapter>(backend, config, maps);
+    }
+    if (interfaces_profile == "RH524J1") {
+        return std::make_unique<RH524J1InterfaceAdapter>(backend, config, maps);
     }
     return std::make_unique<RH5DG2InterfaceAdapter>(backend, config, maps);
 }

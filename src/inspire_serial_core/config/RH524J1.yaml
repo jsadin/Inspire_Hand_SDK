@@ -1,0 +1,19 @@
+# 设备协议配置文件
+protocol:
+  type: RH524J1_485  # 065 腱绳驱动 24DOF，RS485
+
+# 设备配置
+devices:
+  - name: hand_left
+    port: /dev/ttyUSB0
+    baudrate: 115200
+    Hand_ID: 1
+
+# 日志配置
+logging:
+  level: INFO
+  file: logs/rh524j1_hand.log
+  console: true
+  file_enable: true
+  max_file_size_mb: 10
+  max_files: 5

@@ -9,10 +9,11 @@
 #include <thread>
 
 /**
- * 因时 EG-5CD1 电动夹爪 RS485 自定义协议（见 src/document/夹爪485寄存器规则.md）
+ * 因时 EG-5CD1 电动夹爪 RS485 自定义协议（见 docs/EG5CD1协议格式说明.md）
  * 指令帧头 EB 90，应答帧头 EE 16；读命令 0x00，写命令 0x01。
+ * 配置中 protocol.type 使用 EG5CD1。
  */
-class EG5CD1_485_Protocol : public Protocol {
+class EG5CD1_Protocol : public Protocol {
 public:
     int getRegisterAddress(const std::string& register_name) const override;
     std::vector<uint8_t> buildReadCommand(int address, size_t length) override;

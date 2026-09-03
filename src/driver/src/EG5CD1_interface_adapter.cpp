@@ -10,6 +10,7 @@
 #include <std_msgs/msg/header.hpp>
 
 #include <eg5cd1_interfaces/msg/gripper_state.hpp>
+#include <eg5cd1_interfaces/msg/gripper_touch_sensor.hpp>
 #include <eg5cd1_interfaces/msg/set_int32.hpp>
 #include <eg5cd1_interfaces/srv/force_mode_grasp.hpp>
 #include <eg5cd1_interfaces/srv/force_mode_open.hpp>
@@ -27,6 +28,7 @@ namespace {
  * 整组步骤由 worker 串行化，无需再用经验暂停时长来"躲开"定时读。
  */
 constexpr int kCompositeStepMs = 3;
+constexpr int kModeSwitchStepMs = 50;
 
 int clamp_speed(int32_t v) {
     if (v < 0) {
@@ -90,6 +92,35 @@ bool is_trigger_register(const std::string& reg) {
     return kTriggers.count(reg) != 0;
 }
 
+int32_t touch_field(const TouchDataResult& touchData, const char* pad, size_t index) {
+    auto it = touchData.fingerResults.find(pad);
+    if (it == touchData.fingerResults.end() || index >= it->second.size()) {
+        return 0;
+    }
+    const int16_t signed_val = static_cast<int16_t>(it->second[index]);
+    return static_cast<int32_t>(signed_val);
+}
+
+uint32_t touch_proximity(const TouchDataResult& touchData, const char* pad) {
+    auto it = touchData.proximityResults.find(pad);
+    if (it == touchData.proximityResults.end()) {
+        return 0;
+    }
+    return it->second;
+}
+
+void touch_to_msg(const TouchDataResult& touchData, int version, eg5cd1_interfaces::msg::GripperTouchSensor& msg) {
+    msg.normal_force_right = touch_field(touchData, "right", 0);
+    msg.tangential_force_dir_right = touch_field(touchData, "right", 1);
+    msg.tangential_force_right = touch_field(touchData, "right", 2);
+    msg.proximity_right = touch_proximity(touchData, "right");
+    msg.normal_force_left = touch_field(touchData, "left", 0);
+    msg.tangential_force_dir_left = touch_field(touchData, "left", 1);
+    msg.tangential_force_left = touch_field(touchData, "left", 2);
+    msg.proximity_left = touch_proximity(touchData, "left");
+    msg.touch_version = static_cast<uint32_t>(std::max(0, version));
+}
+
 } // namespace
 
 void EG5CD1InterfaceAdapter::wireTopics() {
@@ -102,6 +133,10 @@ void EG5CD1InterfaceAdapter::wireTopics() {
             maps_.publishers[tc.state_topic] =
                 node->create_publisher<eg5cd1_interfaces::msg::GripperState>(tc.state_topic, 10);
             logger->info("[{}] Publisher(GripperState): {}", backend_.ioNodeName(), tc.state_topic);
+        } else if (!tc.state_topic.empty() && tc.name == "touch_control") {
+            maps_.publishers[tc.state_topic] =
+                node->create_publisher<eg5cd1_interfaces::msg::GripperTouchSensor>(tc.state_topic, 10);
+            logger->info("[{}] Publisher(GripperTouchSensor): {}", backend_.ioNodeName(), tc.state_topic);
         }
 
         if (!tc.command_topic.empty() && !tc.write_registers.empty()) {
@@ -186,7 +221,25 @@ void EG5CD1InterfaceAdapter::publishRegisterData(const TopicConfig& topic_config
     pub->publish(msg);
 }
 
-void EG5CD1InterfaceAdapter::publishTouchData(const TopicConfig&, const TouchDataResult&, int) { (void)0; }
+void EG5CD1InterfaceAdapter::publishTouchData(const TopicConfig& topic_config, const TouchDataResult& touchData,
+                                              int version) {
+    if (topic_config.name != "touch_control") {
+        return;
+    }
+
+    rclcpp::Node* node = backend_.ioNode();
+    auto pub = std::dynamic_pointer_cast<rclcpp::Publisher<eg5cd1_interfaces::msg::GripperTouchSensor>>(
+        maps_.publishers[topic_config.state_topic]);
+    if (!pub) {
+        return;
+    }
+
+    eg5cd1_interfaces::msg::GripperTouchSensor msg;
+    stamp_header(msg.header, node, config_.publish_frame_id);
+    msg.hand_id = backend_.ioHandId();
+    touch_to_msg(touchData, version, msg);
+    pub->publish(msg);
+}
 
 void EG5CD1InterfaceAdapter::wireServices() {
     auto logger = getLogger();
@@ -294,7 +347,7 @@ void EG5CD1InterfaceAdapter::wireServices() {
                 return;
             }
             const std::vector<WriteStep> steps = {
-                {"catchModeSet", {1}, kCompositeStepMs},
+                {"catchModeSet", {1}, kModeSwitchStepMs},
                 {"speedSet", {sp}, kCompositeStepMs},
                 {"forceSet", {fg}, 0},
             };
@@ -324,7 +377,7 @@ void EG5CD1InterfaceAdapter::wireServices() {
             }
             const int sp = clamp_speed(req->speed);
             const std::vector<WriteStep> steps = {
-                {"catchModeSet", {1}, kCompositeStepMs},
+                {"catchModeSet", {1}, kModeSwitchStepMs},
                 {"speedSet", {sp}, kCompositeStepMs},
                 {"forceSet", {fo}, 0},
             };
@@ -348,7 +401,7 @@ void EG5CD1InterfaceAdapter::wireServices() {
             const int sp = clamp_speed(req->speed);
             const int tf = clamp_touch_force(req->force);
             const std::vector<WriteStep> steps = {
-                {"catchModeSet", {2}, kCompositeStepMs},
+                {"catchModeSet", {2}, kModeSwitchStepMs},
                 {"speedSet", {sp}, kCompositeStepMs},
                 {"forceSet", {tf}, kCompositeStepMs},
                 {"catchModeClose", {1}, 0},
@@ -373,7 +426,7 @@ void EG5CD1InterfaceAdapter::wireServices() {
             const int sp = clamp_speed(req->speed);
             const int tf = clamp_touch_force(req->force);
             const std::vector<WriteStep> steps = {
-                {"catchModeSet", {2}, kCompositeStepMs},
+                {"catchModeSet", {2}, kModeSwitchStepMs},
                 {"speedSet", {sp}, kCompositeStepMs},
                 {"forceSet", {tf}, kCompositeStepMs},
                 {"catchModeOpen", {1}, 0},

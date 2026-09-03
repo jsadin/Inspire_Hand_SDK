@@ -2,7 +2,7 @@
 # 使用方式：启动节点时 --device-config 指向本文件，且 ros2_controller 使用 ros2_controller_eg5cd1_example.yaml
 
 protocol:
-  type: EG5CD1_485
+  type: EG5CD1
 
 devices:
   - name: gripper_main
@@ -11,7 +11,7 @@ devices:
     Hand_ID: 1
 
 logging:
-  level: INFO
+  level: DEBUG
   file: logs/eg5cd1_gripper.log
   console: true
   file_enable: true

@@ -8,7 +8,7 @@ add_executable(inspire_serial_core_tests
     test_rh56f1_485_protocol.cpp
     test_rh5dg2_485_protocol.cpp
     test_rh56dfx_serial_can_protocol.cpp
-    test_eg5cd1_485_protocol.cpp
+    test_eg5cd1_protocol.cpp
 )
 
 target_link_libraries(inspire_serial_core_tests PRIVATE

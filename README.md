@@ -8,7 +8,7 @@
 
 本项目是一个模块化的灵巧手控制系统，支持：
 - ✅ **多设备支持**：同时控制多个灵巧手设备（如左手、右手）
-- ✅ **多协议支持**：通过工厂模式支持多种通信协议（RH56F1_485、**RH56H1_485** / **RH56H1_canfd**、**RH56DFX_serial_can**、RH5DG2_485、EG5CD1_485 等）
+- ✅ **多协议支持**：通过工厂模式支持多种通信协议（RH56F1_485、**RH56H1_485** / **RH56H1_canfd**、**RH56DFX_serial_can**、RH5DG2_485、**EG5CD1** 等）
 - ✅ **动态配置**：通过 YAML 配置设备协议与 ROS2 话题/服务
 - ✅ **双通信模式**：支持话题（实时控制）和服务（按需调用）两种方式
 - ✅ **异步串口通信**：基于Boost.Asio的异步串口通信，支持超时和错误处理
@@ -61,15 +61,15 @@ serial_control/                        # = git 根 = colcon 工作区根
 | **rh56dfx_interfaces** | RH56DFX Serial-CAN 灵巧手专用 `msg`/`srv`，**服务集已与 RH5DG2/RH56F1 完全对齐**（`Setangle`/`Setforce`/`Setspeed`/`Setid`/`Setbaudrate`/`Setclearerror`/`Setactionseqindex`/`Geterror`/`Getstatus`/`Gettemp` 等底层已支持；`Setmode`/`Setpause`/`Setstop`/`Setresetpara`/`Setgestureforceclb`/`Setactionlibraryindex` 为**接口对齐占位**——厂商 CAN 文档暂未提供这些寄存器地址，调用返回 `not_supported`，补地址后即生效；另含 DFX 特有 `Setsave`）。电流话题 `SetCurrent1`/`GetCurrentAct1` 已映射至 CAN 寄存器 `currentSet`（1020 `CURRENT_LIMIT`）与 `currentAct`（1594 `CURRENT`）；`touchAct` 仍为占位（无触觉硬件）。 |
 | **eg5cd1_interfaces** | **因时 EG-5CD1** 电动夹爪 RS485：`GripperState`、`SetInt32`、`TriggerForHand`、`SetInt32Value`、`GetScalarForHand`；**组合服务** `ForceModeGrasp` / `ForceModeOpen` / `TouchModeGrasp` / `TouchModeOpen`（仅 `hand_id`+`speed`+`force`，内部按文档顺序经 `ioWriteSequence` 在设备 `DeviceWorker` 上**原子串行**写寄存器，见下）。 |
 
-在 **`device_protocol_config.yaml`** 中设置 **`protocol.type`**（如 **`RH5DG2_485`**、**`RH56F1_485`**、**`RH56H1_485`** / **`RH56H1_canfd`**、**`RH56DFX_serial_can`**、**`EG5CD1_485`** 等），启动时自动推导 **`interfaces_profile`**（`RH5DG2` / `RH56F1` / **`RH56H1`** / **`RH56DFX`** / **`EG5CD1`**）并创建对应适配器。
+在 **`device_protocol_config.yaml`** 中设置 **`protocol.type`**（如 **`RH5DG2_485`**、**`RH56F1_485`**、**`RH56H1_485`** / **`RH56H1_canfd`**、**`RH56DFX_serial_can`**、**`EG5CD1`** 等），启动时自动推导 **`interfaces_profile`**（`RH5DG2` / `RH56F1` / **`RH56H1`** / **`RH56DFX`** / **`EG5CD1`**）并创建对应适配器。
 
 **RH56H1** 与 **RH56F1** 寄存器与帧格式相同，支持 **485** 与 **CAN-FD** 两种 `protocol.type`；ROS 接口复用 **`rh56f1_interfaces`**。触觉传感器类型不同，后续在 `RH56H1_485_Protocol` / `RH56H1_canfd_Protocol` 及 `RH56H1_interface_adapter` 中单独适配。
 
 ### EG-5CD1 夹爪全链路说明
 
-- **协议实现**：`EG5CD1_485_Protocol`（`REGISTER_PROTOCOL("EG5CD1_485", …)`），帧头主发 `EB 90`、应答 `EE 16`，读命令 `0x00`、写命令 `0x01`，寄存器名与文档一致（如 `openLenSet`、`gripperStatusBlock` 一次读 1120–1132 共 14 字节）。
+- **协议实现**：`EG5CD1_Protocol`（`REGISTER_PROTOCOL("EG5CD1", …)`），帧头主发 `EB 90`、应答 `EE 16`，读命令 `0x00`、写命令 `0x01`，寄存器名与文档一致（如 `openLenSet`、`gripperStatusBlock` 一次读 1120–1132 共 14 字节）。
 - **示例配置**（随包安装到 `share/inspire_control_ros2/config`）：
-  - `device_protocol_eg5cd1_example.yaml`：`protocol.type: EG5CD1_485` 与串口设备名。
+  - `device_protocol_eg5cd1_example.yaml`：`protocol.type: EG5CD1` 与串口设备名。
   - `ros2_controller_eg5cd1_example.yaml`：话题名需与适配器约定一致：`gripper_state`、`open_len_set`、`speed_set`、`force_set`、`catch_mode_set`。
   - **力控 / 触控组合服务**（节点启动后自动创建，默认前缀见参数）：`{prefix}/force_mode_grasp`、`force_mode_open`、`touch_mode_grasp`、`touch_mode_open`。请求字段均为 `hand_id`、`speed`（0–1000）、`force`（力控夹取 1–2000；力控张开 -2000..0；触控 0–2000）。整组写经 `ioWriteSequence` 在该设备的 `DeviceWorker` 单线程上**原子串行执行**（步骤间隔 3ms 在 worker 线程内），与定时读状态天然互不交错，无需再暂停状态轮询。前缀由 ROS 参数 **`eg5cd1_composite_service_prefix`** 控制（默认 `/gripper`），与示例话题的 `/gripper/...` 对齐。
 - **启动示例**：
@@ -463,7 +463,7 @@ ctest --test-dir build --output-on-failure
 | 步骤 | 内容 |
 |------|------|
 | `colcon build` | 编译整个工作区（6 个包，含 RH56DFX 接口包） |
-| `colcon test` | 运行 `inspire_serial_core` 的 41 个 gtest 用例 |
+| `colcon test` | 运行 `inspire_serial_core` 的 gtest 用例，并用 `grep` 确认至少发现 1 个测试（避免“0 tests”被误判为通过） |
 | `clang-format` | 校验 C++ 代码格式（规则见根目录 `.clang-format`） |
 | `clang-tidy` | 对核心库与驱动包做静态分析（规则见 `.clang-tidy`） |
 
@@ -478,7 +478,7 @@ ctest --test-dir build --output-on-failure
 
 ### 4. 配置设备
 
-编辑 **`src/driver/config/device_protocol_config.yaml`**（或与 launch 一致的 `--device-config` 路径）。`protocol.type` 决定机型（仓库内默认值为 `RH56DFX_serial_can`，下例以 `RH56F1_485` 演示，按需替换为 `RH5DG2_485` / `RH56DFX_serial_can` / `EG5CD1_485` 等）：
+编辑 **`src/driver/config/device_protocol_config.yaml`**（或与 launch 一致的 `--device-config` 路径）。`protocol.type` 决定机型（仓库内默认值为 `RH56DFX_serial_can`，下例以 `RH56F1_485` 演示，按需替换为 `RH5DG2_485` / `RH56DFX_serial_can` / **`EG5CD1`** 等）：
 
 ```yaml
 protocol:

@@ -15,9 +15,12 @@
 struct TouchDataResult {
     using FingerDataMap = std::map<std::string, std::vector<uint16_t>>;
     using PalmDataMap = std::map<std::string, uint16_t>;
+    using ProximityDataMap = std::map<std::string, uint32_t>;
 
     FingerDataMap fingerResults;
     PalmDataMap palmResults;
+    /** EG5CD1：接近觉为 32 位无符号，键 "right" / "left" */
+    ProximityDataMap proximityResults;
 };
 
 // 读触觉数据结果：错误码 + 触觉数据

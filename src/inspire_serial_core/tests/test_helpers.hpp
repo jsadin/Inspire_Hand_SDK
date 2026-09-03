@@ -22,4 +22,11 @@ inline void pushLE16(std::vector<uint8_t>& v, int value) {
     v.push_back(static_cast<uint8_t>((value >> 8) & 0xFF));
 }
 
+inline void pushLE32(std::vector<uint8_t>& v, uint32_t value) {
+    v.push_back(static_cast<uint8_t>(value & 0xFF));
+    v.push_back(static_cast<uint8_t>((value >> 8) & 0xFF));
+    v.push_back(static_cast<uint8_t>((value >> 16) & 0xFF));
+    v.push_back(static_cast<uint8_t>((value >> 24) & 0xFF));
+}
+
 } // namespace test_helpers

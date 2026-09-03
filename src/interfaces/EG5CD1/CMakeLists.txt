@@ -7,6 +7,7 @@ find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/GripperState.msg"
+  "msg/GripperTouchSensor.msg"
   "msg/SetInt32.msg"
   "srv/TriggerForHand.srv"
   "srv/SetInt32Value.srv"

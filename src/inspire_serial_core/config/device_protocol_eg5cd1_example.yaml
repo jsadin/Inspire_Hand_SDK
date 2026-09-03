@@ -1,10 +1,10 @@
 # 与 src/ros2/src/driver/config/device_protocol_eg5cd1_example.yaml 相同，便于非 ROS 路径引用
 protocol:
-  type: EG5CD1_485
+  type: EG5CD1
 
 devices:
   - name: gripper_main
-    port: /dev/ttyUSB0
+    port: /dev/ttyUSB1
     baudrate: 115200
     Hand_ID: 1
 

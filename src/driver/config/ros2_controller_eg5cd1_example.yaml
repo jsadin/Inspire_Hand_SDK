@@ -33,6 +33,12 @@ device_nodes:
           write: ["catchModeSet"]
         command_topic: "/gripper/catch_mode_set"
 
+      - name: touch_control
+        registers:
+          read: ["touchAct"]
+        state_topic: "/gripper/touch_data"
+        touch_version: 1
+
     services:
       - register_name: "clearError"
         set_service_name: "/gripper/clear_error"

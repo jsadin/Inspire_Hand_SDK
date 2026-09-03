@@ -226,7 +226,6 @@ void RH56DFXInterfaceAdapter::publishTouchData(const TopicConfig& topic_config, 
 
 void RH56DFXInterfaceAdapter::wireServices() {
     auto logger = getLogger();
-    rclcpp::Node* node = backend_.ioNode();
 
     for (const auto& sc : config_.services) {
         if (sc.is_write_register && !sc.set_service_name.empty()) {

@@ -42,26 +42,16 @@ std::string valuesToText(const std::vector<int>& values) {
 }
 
 bool isFingerSeriesRegister(const std::string& reg_name) {
-    return reg_name == "posSet" ||
-           reg_name == "angleSet" ||
-           reg_name == "forceSet" ||
-           reg_name == "speedSet" ||
-           reg_name == "currentSet" ||
-           reg_name == "angleAct" ||
-           reg_name == "forceAct" ||
-           reg_name == "currentAct" ||
-           reg_name == "errorCode" ||
-           reg_name == "status" ||
-           reg_name == "temp";
+    return reg_name == "posSet" || reg_name == "angleSet" || reg_name == "forceSet" || reg_name == "speedSet" ||
+           reg_name == "currentSet" || reg_name == "angleAct" || reg_name == "forceAct" || reg_name == "currentAct" ||
+           reg_name == "errorCode" || reg_name == "status" || reg_name == "temp";
 }
 
 // 只读且“每指 1 字节”的寄存器：errorCode / status / temp。
 // 这类寄存器不在写规则表（REGISTER_WRITE_RULE_MAP）中，若按默认 2 字节解码，
 // 会把相邻寄存器数据两两拼成 16 位错误值（例如 errorCode 读出 514）。
 bool isSingleBytePerFingerRegister(const std::string& reg_name) {
-    return reg_name == "errorCode" ||
-           reg_name == "status" ||
-           reg_name == "temp";
+    return reg_name == "errorCode" || reg_name == "status" || reg_name == "temp";
 }
 
 int normalizeTempValue(int value) {
@@ -74,10 +64,7 @@ int normalizeTempValue(int value) {
 }
 
 bool isMotionWriteRegister(const std::string& reg_name) {
-    return reg_name == "posSet" ||
-           reg_name == "angleSet" ||
-           reg_name == "forceSet" ||
-           reg_name == "speedSet";
+    return reg_name == "posSet" || reg_name == "angleSet" || reg_name == "forceSet" || reg_name == "speedSet";
 }
 
 std::string resolveWriteRegisterName(const std::string& reg_name) {
@@ -90,29 +77,29 @@ std::string resolveWriteRegisterName(const std::string& reg_name) {
     return reg_name;
 }
 
-}  // namespace
+} // namespace
 
 const std::map<std::string, int> RH56DFX_serial_can_Protocol::REGISTER_MAP = {
-    {"id", 250},                 // HAND_ID
-    {"baudRate", 4008},          // REDU_RATIO
-    {"clearError", 4016},        // CLEAR_ERROR
-    {"save", 4020},              // SAVE
-    {"resetPara", 1006},         // RESET_PARA
-    {"gestureForceClb", 1009},   // GESTURE_FORCE_CLB
-    {"currentSet", 1020},        // CURRENT_LIMIT(m)，各自由度电流保护阈值（mA）
+    {"id", 250},               // HAND_ID
+    {"baudRate", 4008},        // REDU_RATIO
+    {"clearError", 4016},      // CLEAR_ERROR
+    {"save", 4020},            // SAVE
+    {"resetPara", 1006},       // RESET_PARA
+    {"gestureForceClb", 1009}, // GESTURE_FORCE_CLB
+    {"currentSet", 1020},      // CURRENT_LIMIT(m)，各自由度电流保护阈值（mA）
     {"posSet", 1474},
     {"angleSet", 1486},
     {"forceSet", 1498},
     {"speedSet", 1522},
     {"angleAct", 1546},
     {"forceAct", 1582},
-    {"currentAct", 1594},        // CURRENT(m)，各自由度执行器实际电流（mA，只读）
+    {"currentAct", 1594}, // CURRENT(m)，各自由度执行器实际电流（mA，只读）
     {"errorCode", 1606},
     {"status", 1612},
     {"temp", 1618},
-    {"actionSeqIndex", 2321},      // ACTION_SEQ_INDEX
-    {"actionSeqRun", 2324},        // ACTION_SEQ_RUN
-    {"actionLibraryIndex", 2321},  // ACTION_SEQ_INDEX
+    {"actionSeqIndex", 2321},     // ACTION_SEQ_INDEX
+    {"actionSeqRun", 2324},       // ACTION_SEQ_RUN
+    {"actionLibraryIndex", 2321}, // ACTION_SEQ_INDEX
     {"touchAct", 3000},
 };
 
@@ -131,40 +118,24 @@ const std::map<std::string, size_t> RH56DFX_serial_can_Protocol::REGISTER_READ_L
     {"angleAct", 12},
     {"forceAct", 12},
     {"currentAct", 12},
-    {"errorCode", 6},  // 每指 1 字节，共 6 字节（与 status/temp 一致）
-    {"status", 6},     // 每指 1 字节，共 6 字节
-    {"temp", 6},       // 每指 1 字节，共 6 字节（对齐温度读取规则 response[6:12]）
+    {"errorCode", 6}, // 每指 1 字节，共 6 字节（与 status/temp 一致）
+    {"status", 6},    // 每指 1 字节，共 6 字节
+    {"temp", 6},      // 每指 1 字节，共 6 字节（对齐温度读取规则 response[6:12]）
     {"actionSeqIndex", 2},
     {"actionSeqRun", 2},
     {"actionLibraryIndex", 1},
 };
 
 const std::map<std::string, RH56DFX_serial_can_Protocol::RegisterWriteRule>
-RH56DFX_serial_can_Protocol::REGISTER_WRITE_RULE_MAP = {
-    {"id", {2, 1}},
-    {"baudRate", {1, 1}},
-    {"clearError", {1, 1}},
-    {"save", {1, 1}},
-    {"resetPara", {1, 1}},
-    {"gestureForceClb", {1, 1}},
-    {"currentSet", {2, 6}},
-    {"posSet", {2, 6}},
-    {"angleSet", {2, 6}},
-    {"forceSet", {2, 6}},
-    {"speedSet", {2, 6}},
-    {"actionSeqIndex", {2, 1}},
-    {"actionSeqRun", {2, 1}},
-    {"actionLibraryIndex", {1, 1}},
+    RH56DFX_serial_can_Protocol::REGISTER_WRITE_RULE_MAP = {
+        {"id", {2, 1}},           {"baudRate", {1, 1}},           {"clearError", {1, 1}}, {"save", {1, 1}},
+        {"resetPara", {1, 1}},    {"gestureForceClb", {1, 1}},    {"currentSet", {2, 6}}, {"posSet", {2, 6}},
+        {"angleSet", {2, 6}},     {"forceSet", {2, 6}},           {"speedSet", {2, 6}},   {"actionSeqIndex", {2, 1}},
+        {"actionSeqRun", {2, 1}}, {"actionLibraryIndex", {1, 1}},
 };
 
 const std::set<std::string> RH56DFX_serial_can_Protocol::NOT_SUPPORTED_REGISTERS = {
-    "defaultSpeedSet",
-    "defaultForceSet",
-    "posAct",
-    "mode",
-    "pause",
-    "stop",
-    "touchAct",
+    "defaultSpeedSet", "defaultForceSet", "posAct", "mode", "pause", "stop", "touchAct",
 };
 
 int RH56DFX_serial_can_Protocol::getRegisterAddress(const std::string& register_name) const {
@@ -194,10 +165,9 @@ uint32_t RH56DFX_serial_can_Protocol::buildCanId(uint8_t rw_flag, int address) c
     return rw | reg | hid;
 }
 
-std::vector<uint8_t> RH56DFX_serial_can_Protocol::buildSerialCanFrame(
-    uint32_t can_id,
-    const std::vector<uint8_t>& payload,
-    bool is_read) const {
+std::vector<uint8_t> RH56DFX_serial_can_Protocol::buildSerialCanFrame(uint32_t can_id,
+                                                                      const std::vector<uint8_t>& payload,
+                                                                      bool is_read) const {
     std::vector<uint8_t> frame;
     frame.reserve(kSerialFrameLength);
     frame.push_back(kFrameHead0);
@@ -307,8 +277,8 @@ bool RH56DFX_serial_can_Protocol::validateChecksum(const std::vector<uint8_t>& r
     if (response.size() != kSerialFrameLength) {
         return false;
     }
-    if (response[0] != kFrameHead0 || response[1] != kFrameHead1 ||
-        response[19] != kFrameTail0 || response[20] != kFrameTail1) {
+    if (response[0] != kFrameHead0 || response[1] != kFrameHead1 || response[19] != kFrameTail0 ||
+        response[20] != kFrameTail1) {
         return false;
     }
 
@@ -319,20 +289,15 @@ bool RH56DFX_serial_can_Protocol::validateChecksum(const std::vector<uint8_t>& r
     return checksum == response[18];
 }
 
-bool RH56DFX_serial_can_Protocol::parseAndValidateFrame(
-    const std::vector<uint8_t>& frame,
-    uint8_t expected_rw,
-    int expected_address,
-    std::vector<uint8_t>* out_payload,
-    uint8_t* out_valid_len) const {
+bool RH56DFX_serial_can_Protocol::parseAndValidateFrame(const std::vector<uint8_t>& frame, uint8_t expected_rw,
+                                                        int expected_address, std::vector<uint8_t>* out_payload,
+                                                        uint8_t* out_valid_len) const {
     if (!validateChecksum(frame)) {
         return false;
     }
 
-    const uint32_t can_id = static_cast<uint32_t>(frame[2]) |
-                            (static_cast<uint32_t>(frame[3]) << 8) |
-                            (static_cast<uint32_t>(frame[4]) << 16) |
-                            (static_cast<uint32_t>(frame[5]) << 24);
+    const uint32_t can_id = static_cast<uint32_t>(frame[2]) | (static_cast<uint32_t>(frame[3]) << 8) |
+                            (static_cast<uint32_t>(frame[4]) << 16) | (static_cast<uint32_t>(frame[5]) << 24);
 
     const uint8_t rw_flag = static_cast<uint8_t>((can_id >> 26) & 0x07);
     const int address = static_cast<int>((can_id >> 14) & 0x0FFF);
@@ -354,10 +319,9 @@ bool RH56DFX_serial_can_Protocol::parseAndValidateFrame(
     return true;
 }
 
-std::vector<uint8_t> RH56DFX_serial_can_Protocol::encodeValuesByRule(
-    const std::string& reg_name,
-    const std::vector<int>& values,
-    IoError* err) const {
+std::vector<uint8_t> RH56DFX_serial_can_Protocol::encodeValuesByRule(const std::string& reg_name,
+                                                                     const std::vector<int>& values,
+                                                                     IoError* err) const {
     if (values.empty()) {
         if (err != nullptr) {
             *err = IoError::InvalidArgument;
@@ -404,9 +368,8 @@ std::vector<uint8_t> RH56DFX_serial_can_Protocol::encodeValuesByRule(
     return bytes;
 }
 
-std::vector<int> RH56DFX_serial_can_Protocol::decodeValuesByRule(
-    const std::string& reg_name,
-    const std::vector<uint8_t>& payload) const {
+std::vector<int> RH56DFX_serial_can_Protocol::decodeValuesByRule(const std::string& reg_name,
+                                                                 const std::vector<uint8_t>& payload) const {
     RegisterWriteRule rule{};
     const auto it_rule = REGISTER_WRITE_RULE_MAP.find(reg_name);
     if (it_rule != REGISTER_WRITE_RULE_MAP.end()) {
@@ -440,10 +403,8 @@ std::vector<int> RH56DFX_serial_can_Protocol::decodeValuesByRule(
     return values;
 }
 
-IoError RH56DFX_serial_can_Protocol::writeRegister(
-    Device device,
-    const std::string& reg_name,
-    const std::vector<int>& values) {
+IoError RH56DFX_serial_can_Protocol::writeRegister(Device device, const std::string& reg_name,
+                                                   const std::vector<int>& values) {
     auto logger = getLogger();
 
     const std::string effective_reg = resolveWriteRegisterName(reg_name);
@@ -503,13 +464,8 @@ IoError RH56DFX_serial_can_Protocol::writeRegister(
         const int frame_addr = base_address + static_cast<int>(value_offset * bytes_per_value);
         const uint32_t can_id = buildCanId(kRwWriteHand, frame_addr);
         const auto cmd = buildSerialCanFrame(can_id, frame_payload, false);
-        logger->info(
-            "[RH56DFX] 写寄存器 {} addr={} can_id=0x{:08X} values={} tx={}",
-            reg_name,
-            frame_addr,
-            can_id,
-            frame_values.size(),
-            bytesToHex(cmd));
+        logger->info("[RH56DFX] 写寄存器 {} addr={} can_id=0x{:08X} values={} tx={}", reg_name, frame_addr, can_id,
+                     frame_values.size(), bytesToHex(cmd));
 
         try {
             // 对齐 2.py 的行为：每次发送前清空输入缓冲，避免历史数据干扰当前收包
@@ -538,11 +494,8 @@ IoError RH56DFX_serial_can_Protocol::writeRegister(
         std::vector<uint8_t> payload;
         uint8_t valid_len = 0;
         if (!parseAndValidateFrame(response, kRwWriteHand, frame_addr, &payload, &valid_len)) {
-            logger->error(
-                "[RH56DFX] 写寄存器 {} 回包校验失败（bad_response），addr={} expected_rw={}",
-                reg_name,
-                frame_addr,
-                static_cast<int>(kRwWriteHand));
+            logger->error("[RH56DFX] 写寄存器 {} 回包校验失败（bad_response），addr={} expected_rw={}", reg_name,
+                          frame_addr, static_cast<int>(kRwWriteHand));
             return IoError::BadResponse;
         }
 
@@ -562,11 +515,8 @@ IoError RH56DFX_serial_can_Protocol::writeRegister(
     return IoError::Ok;
 }
 
-RegisterReadResult RH56DFX_serial_can_Protocol::readRegister(
-    Device device,
-    RingBuffer& ringBuffer,
-    const std::string& reg_name,
-    size_t length) {
+RegisterReadResult RH56DFX_serial_can_Protocol::readRegister(Device device, RingBuffer& ringBuffer,
+                                                             const std::string& reg_name, size_t length) {
     (void)ringBuffer;
     auto logger = getLogger();
 
@@ -598,13 +548,8 @@ RegisterReadResult RH56DFX_serial_can_Protocol::readRegister(
 
         std::vector<uint8_t> read_req = {static_cast<uint8_t>(chunk_len)};
         const auto cmd = buildSerialCanFrame(can_id, read_req, true);
-        logger->debug(
-            "[RH56DFX] 读寄存器 {} addr={} can_id=0x{:08X} len={} tx={}",
-            reg_name,
-            frame_addr,
-            can_id,
-            chunk_len,
-            bytesToHex(cmd));
+        logger->debug("[RH56DFX] 读寄存器 {} addr={} can_id=0x{:08X} len={} tx={}", reg_name, frame_addr, can_id,
+                      chunk_len, bytesToHex(cmd));
 
         try {
             // 对齐 2.py 的行为：每次发送前清空输入缓冲，避免历史数据干扰当前收包
@@ -617,11 +562,8 @@ RegisterReadResult RH56DFX_serial_can_Protocol::readRegister(
 
         const auto response = readOneFrameRaw(device, 30);
         if (response.empty()) {
-            logger->error(
-                "[RH56DFX] 读寄存器 {} 超时无回包（timeout），addr={} len={}",
-                reg_name,
-                frame_addr,
-                chunk_len);
+            logger->error("[RH56DFX] 读寄存器 {} 超时无回包（timeout），addr={} len={}", reg_name, frame_addr,
+                          chunk_len);
             return {IoError::Timeout, {}};
         }
         logger->debug("[RH56DFX] 读寄存器 {} rx={}", reg_name, bytesToHex(response));
@@ -629,34 +571,26 @@ RegisterReadResult RH56DFX_serial_can_Protocol::readRegister(
         std::vector<uint8_t> payload;
         uint8_t valid_len = 0;
         if (!parseAndValidateFrame(response, kRwReadHand, frame_addr, &payload, &valid_len)) {
-            logger->error(
-                "[RH56DFX] 读寄存器 {} 回包校验失败（bad_response），addr={}",
-                reg_name,
-                frame_addr);
+            logger->error("[RH56DFX] 读寄存器 {} 回包校验失败（bad_response），addr={}", reg_name, frame_addr);
             return {IoError::BadResponse, {}};
         }
 
         const size_t used = std::min<size_t>({payload.size(), static_cast<size_t>(valid_len), chunk_len});
         if (used == 0) {
-            logger->error(
-                "[RH56DFX] 读寄存器 {} 回包长度非法（bad_response），addr={} payload={} valid_len={}",
-                reg_name,
-                frame_addr,
-                payload.size(),
-                static_cast<int>(valid_len));
+            logger->error("[RH56DFX] 读寄存器 {} 回包长度非法（bad_response），addr={} payload={} valid_len={}",
+                          reg_name, frame_addr, payload.size(), static_cast<int>(valid_len));
             return {IoError::BadResponse, {}};
         }
 
-        merged_payload.insert(merged_payload.end(), payload.begin(), payload.begin() + static_cast<std::ptrdiff_t>(used));
+        merged_payload.insert(merged_payload.end(), payload.begin(),
+                              payload.begin() + static_cast<std::ptrdiff_t>(used));
         byte_offset += used;
     }
 
     auto decoded = decodeValuesByRule(reg_name, merged_payload);
     if (decoded.empty() && !merged_payload.empty()) {
-        logger->error(
-            "[RH56DFX] 读寄存器 {} 解码失败（bad_response），payload_len={}",
-            reg_name,
-            merged_payload.size());
+        logger->error("[RH56DFX] 读寄存器 {} 解码失败（bad_response），payload_len={}", reg_name,
+                      merged_payload.size());
         return {IoError::BadResponse, {}};
     }
 
@@ -684,10 +618,8 @@ uint8_t RH56DFX_serial_can_Protocol::readByteAtOffset(const RingBuffer& ringBuff
     return buf[(tailIndex + offset) % bufferSize];
 }
 
-std::vector<uint8_t> RH56DFX_serial_can_Protocol::extractFromRingBuffer(
-    const RingBuffer& ringBuffer,
-    size_t startOffset,
-    size_t length) const {
+std::vector<uint8_t> RH56DFX_serial_can_Protocol::extractFromRingBuffer(const RingBuffer& ringBuffer,
+                                                                        size_t startOffset, size_t length) const {
     std::vector<uint8_t> result(length);
     const std::vector<uint8_t>& buf = ringBuffer.getBuffer();
     const size_t tailIndex = ringBuffer.getTail();
@@ -842,12 +774,10 @@ std::pair<bool, TouchDataResult> RH56DFX_serial_can_Protocol::parseTouchData(Rin
                 }
             }
         } else {
-            logger->warn(
-                "触觉数据不足，无法解析掌心数据 (需要 {} 字节，实际可用 {} 字节)",
-                palm_data_length,
-                (data_start + available_data_length > palm_start_idx)
-                    ? (data_start + available_data_length - palm_start_idx)
-                    : 0);
+            logger->warn("触觉数据不足，无法解析掌心数据 (需要 {} 字节，实际可用 {} 字节)", palm_data_length,
+                         (data_start + available_data_length > palm_start_idx)
+                             ? (data_start + available_data_length - palm_start_idx)
+                             : 0);
         }
 
         ringBuffer.advance(startIdx + response_len);
@@ -877,10 +807,7 @@ TouchReadResult RH56DFX_serial_can_Protocol::readTouchData(Device device, RingBu
         }
 
         const auto readTouchCmd = buildReadCommand(touchAddress, 68);
-        logger->debug(
-            "[读取命令-触觉] 地址: 0x{:04X}, 长度: 68, 命令: {}",
-            touchAddress,
-            bytesToHex(readTouchCmd));
+        logger->debug("[读取命令-触觉] 地址: 0x{:04X}, 长度: 68, 命令: {}", touchAddress, bytesToHex(readTouchCmd));
 
         try {
             device->clearBuffer();
@@ -940,9 +867,7 @@ std::vector<uint8_t> RH56DFX_serial_can_Protocol::buildReadCommand(int address, 
     return buildSerialCanFrame(can_id, read_req, true);
 }
 
-std::vector<uint8_t> RH56DFX_serial_can_Protocol::buildWriteCommand(
-    int address,
-    const std::vector<int>& values) {
+std::vector<uint8_t> RH56DFX_serial_can_Protocol::buildWriteCommand(int address, const std::vector<int>& values) {
     std::vector<uint8_t> payload;
     payload.reserve(values.size() * 2);
     for (int v : values) {
@@ -960,4 +885,3 @@ std::pair<bool, std::vector<int>> RH56DFX_serial_can_Protocol::parseResponse(Rin
 }
 
 REGISTER_PROTOCOL("RH56DFX_serial_can", RH56DFX_serial_can_Protocol);
-

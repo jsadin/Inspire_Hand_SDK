@@ -59,11 +59,9 @@ void RegisterController::applyInitialRegisters() {
     auto logger = getLogger();
     for (const auto& initial : config_.initial_registers) {
         try {
-            const IoError err = worker_
-                                    ->submit([this, initial]() {
-                                        return writeRegister(initial.register_name, initial.values);
-                                    })
-                                    .get();
+            const IoError err =
+                worker_->submit([this, initial]() { return writeRegister(initial.register_name, initial.values); })
+                    .get();
             if (isOk(err)) {
                 logger->info("[{}] 启动初始写入 {} 成功 ({} 个值)", get_name(), initial.register_name,
                              initial.values.size());

@@ -1,37 +1,37 @@
 #include "RH56DFX_interface_adapter.hpp"
 #include "logger_manager.hpp"
 
-#include <stdexcept>
 #include <std_msgs/msg/header.hpp>
+#include <stdexcept>
 
-#include <rh56dfx_interfaces/msg/set_angle1.hpp>
 #include <rh56dfx_interfaces/msg/get_angle_act1.hpp>
-#include <rh56dfx_interfaces/msg/set_force1.hpp>
-#include <rh56dfx_interfaces/msg/get_force_act1.hpp>
-#include <rh56dfx_interfaces/msg/set_speed1.hpp>
-#include <rh56dfx_interfaces/msg/set_current1.hpp>
 #include <rh56dfx_interfaces/msg/get_current_act1.hpp>
+#include <rh56dfx_interfaces/msg/get_force_act1.hpp>
+#include <rh56dfx_interfaces/msg/set_angle1.hpp>
+#include <rh56dfx_interfaces/msg/set_current1.hpp>
+#include <rh56dfx_interfaces/msg/set_force1.hpp>
+#include <rh56dfx_interfaces/msg/set_speed1.hpp>
 #include <rh56dfx_interfaces/msg/touch_data1.hpp>
 
-#include <rh56dfx_interfaces/srv/setangle.hpp>
-#include <rh56dfx_interfaces/srv/setforce.hpp>
-#include <rh56dfx_interfaces/srv/setspeed.hpp>
-#include <rh56dfx_interfaces/srv/setdefaultspeed.hpp>
-#include <rh56dfx_interfaces/srv/setdefaultforceset.hpp>
-#include <rh56dfx_interfaces/srv/setid.hpp>
-#include <rh56dfx_interfaces/srv/setbaudrate.hpp>
-#include <rh56dfx_interfaces/srv/setclearerror.hpp>
-#include <rh56dfx_interfaces/srv/setsave.hpp>
-#include <rh56dfx_interfaces/srv/setactionseqindex.hpp>
-#include <rh56dfx_interfaces/srv/setmode.hpp>
-#include <rh56dfx_interfaces/srv/setpause.hpp>
-#include <rh56dfx_interfaces/srv/setstop.hpp>
-#include <rh56dfx_interfaces/srv/setresetpara.hpp>
-#include <rh56dfx_interfaces/srv/setgestureforceclb.hpp>
-#include <rh56dfx_interfaces/srv/setactionlibraryindex.hpp>
 #include <rh56dfx_interfaces/srv/geterror.hpp>
 #include <rh56dfx_interfaces/srv/getstatus.hpp>
 #include <rh56dfx_interfaces/srv/gettemp.hpp>
+#include <rh56dfx_interfaces/srv/setactionlibraryindex.hpp>
+#include <rh56dfx_interfaces/srv/setactionseqindex.hpp>
+#include <rh56dfx_interfaces/srv/setangle.hpp>
+#include <rh56dfx_interfaces/srv/setbaudrate.hpp>
+#include <rh56dfx_interfaces/srv/setclearerror.hpp>
+#include <rh56dfx_interfaces/srv/setdefaultforceset.hpp>
+#include <rh56dfx_interfaces/srv/setdefaultspeed.hpp>
+#include <rh56dfx_interfaces/srv/setforce.hpp>
+#include <rh56dfx_interfaces/srv/setgestureforceclb.hpp>
+#include <rh56dfx_interfaces/srv/setid.hpp>
+#include <rh56dfx_interfaces/srv/setmode.hpp>
+#include <rh56dfx_interfaces/srv/setpause.hpp>
+#include <rh56dfx_interfaces/srv/setresetpara.hpp>
+#include <rh56dfx_interfaces/srv/setsave.hpp>
+#include <rh56dfx_interfaces/srv/setspeed.hpp>
+#include <rh56dfx_interfaces/srv/setstop.hpp>
 
 namespace {
 
@@ -68,7 +68,7 @@ void touch_to_msg(const TouchDataResult& touchData, rh56dfx_interfaces::msg::Tou
     }
 }
 
-}  // namespace
+} // namespace
 
 void RH56DFXInterfaceAdapter::wireTopics() {
     auto logger = getLogger();
@@ -78,21 +78,21 @@ void RH56DFXInterfaceAdapter::wireTopics() {
     for (const auto& tc : config_.topics) {
         if (!tc.state_topic.empty()) {
             if (tc.name == "angle_control") {
-                maps_.publishers[tc.state_topic] = node->create_publisher<rh56dfx_interfaces::msg::GetAngleAct1>(
-                    tc.state_topic, 10);
+                maps_.publishers[tc.state_topic] =
+                    node->create_publisher<rh56dfx_interfaces::msg::GetAngleAct1>(tc.state_topic, 10);
                 logger->info("[{}] Publisher(GetAngleAct1): {}", backend_.ioNodeName(), tc.state_topic);
             } else if (tc.name == "force_control") {
-                maps_.publishers[tc.state_topic] = node->create_publisher<rh56dfx_interfaces::msg::GetForceAct1>(
-                    tc.state_topic, 10);
+                maps_.publishers[tc.state_topic] =
+                    node->create_publisher<rh56dfx_interfaces::msg::GetForceAct1>(tc.state_topic, 10);
                 logger->info("[{}] Publisher(GetForceAct1): {}", backend_.ioNodeName(), tc.state_topic);
             } else if (tc.name == "current_control") {
-                maps_.publishers[tc.state_topic] = node->create_publisher<rh56dfx_interfaces::msg::GetCurrentAct1>(
-                    tc.state_topic, 10);
+                maps_.publishers[tc.state_topic] =
+                    node->create_publisher<rh56dfx_interfaces::msg::GetCurrentAct1>(tc.state_topic, 10);
                 logger->info("[{}] Publisher(GetCurrentAct1): {}", backend_.ioNodeName(), tc.state_topic);
             } else if (tc.name == "touch_control") {
                 // 接口占位：RH56DFX 无触觉硬件（touchAct 属 NOT_SUPPORTED），同上。
-                maps_.publishers[tc.state_topic] = node->create_publisher<rh56dfx_interfaces::msg::TouchData1>(
-                    tc.state_topic, 10);
+                maps_.publishers[tc.state_topic] =
+                    node->create_publisher<rh56dfx_interfaces::msg::TouchData1>(tc.state_topic, 10);
                 logger->info("[{}] Publisher(TouchData1): {}", backend_.ioNodeName(), tc.state_topic);
             }
         }
@@ -101,11 +101,10 @@ void RH56DFXInterfaceAdapter::wireTopics() {
             const std::string reg = tc.write_registers[0];
             if (tc.name == "angle_control") {
                 maps_.subscribers[tc.command_topic] = makeGroupedSubscription<rh56dfx_interfaces::msg::SetAngle1>(
-                    tc.command_topic, 10,
-                    [this, reg, hid](rh56dfx_interfaces::msg::SetAngle1::SharedPtr msg) {
+                    tc.command_topic, 10, [this, reg, hid](rh56dfx_interfaces::msg::SetAngle1::SharedPtr msg) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, msg->hand_id)) {
                             getLogger()->warn("[{}] 忽略 SetAngle1: hand_id={}（本节点 Hand_ID={}）",
-                                backend_.ioNodeName(), msg->hand_id, hid);
+                                              backend_.ioNodeName(), msg->hand_id, hid);
                             return;
                         }
                         std::vector<int> vals(msg->joint_values.begin(), msg->joint_values.end());
@@ -114,11 +113,10 @@ void RH56DFXInterfaceAdapter::wireTopics() {
                 logger->info("[{}] Subscriber(SetAngle1): {}", backend_.ioNodeName(), tc.command_topic);
             } else if (tc.name == "force_control") {
                 maps_.subscribers[tc.command_topic] = makeGroupedSubscription<rh56dfx_interfaces::msg::SetForce1>(
-                    tc.command_topic, 10,
-                    [this, reg, hid](rh56dfx_interfaces::msg::SetForce1::SharedPtr msg) {
+                    tc.command_topic, 10, [this, reg, hid](rh56dfx_interfaces::msg::SetForce1::SharedPtr msg) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, msg->hand_id)) {
                             getLogger()->warn("[{}] 忽略 SetForce1: hand_id={}（本节点 Hand_ID={}）",
-                                backend_.ioNodeName(), msg->hand_id, hid);
+                                              backend_.ioNodeName(), msg->hand_id, hid);
                             return;
                         }
                         std::vector<int> vals(msg->joint_values.begin(), msg->joint_values.end());
@@ -127,11 +125,10 @@ void RH56DFXInterfaceAdapter::wireTopics() {
                 logger->info("[{}] Subscriber(SetForce1): {}", backend_.ioNodeName(), tc.command_topic);
             } else if (tc.name == "speed_control") {
                 maps_.subscribers[tc.command_topic] = makeGroupedSubscription<rh56dfx_interfaces::msg::SetSpeed1>(
-                    tc.command_topic, 10,
-                    [this, reg, hid](rh56dfx_interfaces::msg::SetSpeed1::SharedPtr msg) {
+                    tc.command_topic, 10, [this, reg, hid](rh56dfx_interfaces::msg::SetSpeed1::SharedPtr msg) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, msg->hand_id)) {
                             getLogger()->warn("[{}] 忽略 SetSpeed1: hand_id={}（本节点 Hand_ID={}）",
-                                backend_.ioNodeName(), msg->hand_id, hid);
+                                              backend_.ioNodeName(), msg->hand_id, hid);
                             return;
                         }
                         std::vector<int> vals(msg->joint_values.begin(), msg->joint_values.end());
@@ -140,11 +137,10 @@ void RH56DFXInterfaceAdapter::wireTopics() {
                 logger->info("[{}] Subscriber(SetSpeed1): {}", backend_.ioNodeName(), tc.command_topic);
             } else if (tc.name == "current_control") {
                 maps_.subscribers[tc.command_topic] = makeGroupedSubscription<rh56dfx_interfaces::msg::SetCurrent1>(
-                    tc.command_topic, 10,
-                    [this, reg, hid](rh56dfx_interfaces::msg::SetCurrent1::SharedPtr msg) {
+                    tc.command_topic, 10, [this, reg, hid](rh56dfx_interfaces::msg::SetCurrent1::SharedPtr msg) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, msg->hand_id)) {
                             getLogger()->warn("[{}] 忽略 SetCurrent1: hand_id={}（本节点 Hand_ID={}）",
-                                backend_.ioNodeName(), msg->hand_id, hid);
+                                              backend_.ioNodeName(), msg->hand_id, hid);
                             return;
                         }
                         std::vector<int> vals(msg->joint_values.begin(), msg->joint_values.end());
@@ -156,10 +152,7 @@ void RH56DFXInterfaceAdapter::wireTopics() {
     }
 }
 
-void RH56DFXInterfaceAdapter::publishRegisterData(
-    const TopicConfig& topic_config,
-    const std::vector<int>& values)
-{
+void RH56DFXInterfaceAdapter::publishRegisterData(const TopicConfig& topic_config, const std::vector<int>& values) {
     const int32_t hid = backend_.ioHandId();
     rclcpp::Node* node = backend_.ioNode();
 
@@ -214,11 +207,8 @@ void RH56DFXInterfaceAdapter::publishRegisterData(
     }
 }
 
-void RH56DFXInterfaceAdapter::publishTouchData(
-    const TopicConfig& topic_config,
-    const TouchDataResult& touchData,
-    int version)
-{
+void RH56DFXInterfaceAdapter::publishTouchData(const TopicConfig& topic_config, const TouchDataResult& touchData,
+                                               int version) {
     // 接口占位：RH56DFX 无触觉硬件，常态下 touchAct 读返回 NotSupported，本函数不会被调用。
     // 保留完整发布逻辑，便于未来若接入触觉硬件可直接生效。
     (void)version;
@@ -244,10 +234,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
 
             if (reg == "angleSet") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setangle>(
-                    sc.set_service_name,
-                    [this, reg](
-                        const rh56dfx_interfaces::srv::Setangle::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setangle::Response::SharedPtr res) {
+                    sc.set_service_name, [this, reg](const rh56dfx_interfaces::srv::Setangle::Request::SharedPtr req,
+                                                     rh56dfx_interfaces::srv::Setangle::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -261,10 +249,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(SetAngle): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "forceSet") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setforce>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setforce::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setforce::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setforce::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setforce::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -278,10 +264,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(SetForce): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "speedSet") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setspeed>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setspeed::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setspeed::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setspeed::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setspeed::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -294,36 +278,35 @@ void RH56DFXInterfaceAdapter::wireServices() {
                     });
                 logger->info("[{}] Service(SetSpeed): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "defaultSpeedSet") {
-                maps_.services[sc.set_service_name] = this->makeGroupedService<rh56dfx_interfaces::srv::Setdefaultspeed>(
-                    sc.set_service_name,
-                    [this, reg](
-                        const rh56dfx_interfaces::srv::Setdefaultspeed::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setdefaultspeed::Response::SharedPtr res) {
-                        if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
-                            res->accepted = false;
-                            res->message = "rejected: hand_id mismatch";
-                            getLogger()->warn("[{}] 拒绝 Setdefaultspeed: hand_id={}（本节点 Hand_ID={}）",
-                                backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
-                            return;
-                        }
-                        std::vector<int> vals(req->joint_values.begin(), req->joint_values.end());
-                        const IoError e = backend_.ioWriteRegister(reg, vals);
-                        res->accepted = isOk(e);
-                        res->message = toString(e);
-                    });
+                maps_.services[sc.set_service_name] =
+                    this->makeGroupedService<rh56dfx_interfaces::srv::Setdefaultspeed>(
+                        sc.set_service_name,
+                        [this, reg](const rh56dfx_interfaces::srv::Setdefaultspeed::Request::SharedPtr req,
+                                    rh56dfx_interfaces::srv::Setdefaultspeed::Response::SharedPtr res) {
+                            if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
+                                res->accepted = false;
+                                res->message = "rejected: hand_id mismatch";
+                                getLogger()->warn("[{}] 拒绝 Setdefaultspeed: hand_id={}（本节点 Hand_ID={}）",
+                                                  backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
+                                return;
+                            }
+                            std::vector<int> vals(req->joint_values.begin(), req->joint_values.end());
+                            const IoError e = backend_.ioWriteRegister(reg, vals);
+                            res->accepted = isOk(e);
+                            res->message = toString(e);
+                        });
                 logger->info("[{}] Service(Setdefaultspeed): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "defaultForceSet") {
                 maps_.services[sc.set_service_name] =
                     this->makeGroupedService<rh56dfx_interfaces::srv::Setdefaultforceset>(
                         sc.set_service_name,
-                        [this, reg](
-                            const rh56dfx_interfaces::srv::Setdefaultforceset::Request::SharedPtr req,
-                            rh56dfx_interfaces::srv::Setdefaultforceset::Response::SharedPtr res) {
+                        [this, reg](const rh56dfx_interfaces::srv::Setdefaultforceset::Request::SharedPtr req,
+                                    rh56dfx_interfaces::srv::Setdefaultforceset::Response::SharedPtr res) {
                             if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                                 res->accepted = false;
                                 res->message = "rejected: hand_id mismatch";
                                 getLogger()->warn("[{}] 拒绝 Setdefaultforceset: hand_id={}（本节点 Hand_ID={}）",
-                                    backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
+                                                  backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
                                 return;
                             }
                             std::vector<int> vals(req->joint_values.begin(), req->joint_values.end());
@@ -334,10 +317,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(Setdefaultforceset): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "id") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setid>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setid::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setid::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setid::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setid::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -350,10 +331,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(Setid): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "baudRate") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setbaudrate>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setbaudrate::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setbaudrate::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setbaudrate::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setbaudrate::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -366,10 +345,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(Setbaudrate): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "clearError") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setclearerror>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setclearerror::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setclearerror::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setclearerror::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setclearerror::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -382,10 +359,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(Setclearerror): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "save") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setsave>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setsave::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setsave::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setsave::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setsave::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -399,9 +374,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
             } else if (reg == "actionSeqIndex") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setactionseqindex>(
                     sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setactionseqindex::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setactionseqindex::Response::SharedPtr res) {
+                    [this](const rh56dfx_interfaces::srv::Setactionseqindex::Request::SharedPtr req,
+                           rh56dfx_interfaces::srv::Setactionseqindex::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -417,10 +391,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 // 协议层 NOT_SUPPORTED_REGISTERS 已拦截，调用将返回 not_supported。
                 // 待拿到 CAN 地址后，在协议 REGISTER_MAP 补地址并从 NOT_SUPPORTED 移除即可启用。
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setmode>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setmode::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setmode::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setmode::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setmode::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -434,10 +406,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(SetMode): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "pause") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setpause>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setpause::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setpause::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setpause::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setpause::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -450,10 +420,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(Setpause): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "stop") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setstop>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setstop::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setstop::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setstop::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setstop::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -466,10 +434,8 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(Setstop): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "resetPara") {
                 maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setresetpara>(
-                    sc.set_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Setresetpara::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Setresetpara::Response::SharedPtr res) {
+                    sc.set_service_name, [this](const rh56dfx_interfaces::srv::Setresetpara::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Setresetpara::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             res->accepted = false;
                             res->message = "rejected: hand_id mismatch";
@@ -481,43 +447,41 @@ void RH56DFXInterfaceAdapter::wireServices() {
                     });
                 logger->info("[{}] Service(Setresetpara): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "gestureForceClb") {
-                maps_.services[sc.set_service_name] =
-                    makeGroupedService<rh56dfx_interfaces::srv::Setgestureforceclb>(
-                        sc.set_service_name,
-                        [this](
-                            const rh56dfx_interfaces::srv::Setgestureforceclb::Request::SharedPtr req,
-                            rh56dfx_interfaces::srv::Setgestureforceclb::Response::SharedPtr res) {
-                            if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
-                                res->accepted = false;
-                                res->message = "rejected: hand_id mismatch";
-                                return;
-                            }
-                            std::vector<int> vals(req->calibration_values.begin(), req->calibration_values.end());
-                            const IoError e = backend_.ioWriteRegister("gestureForceClb", vals);
-                            res->accepted = isOk(e);
-                            res->message = toString(e);
-                        });
+                maps_.services[sc.set_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Setgestureforceclb>(
+                    sc.set_service_name,
+                    [this](const rh56dfx_interfaces::srv::Setgestureforceclb::Request::SharedPtr req,
+                           rh56dfx_interfaces::srv::Setgestureforceclb::Response::SharedPtr res) {
+                        if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
+                            res->accepted = false;
+                            res->message = "rejected: hand_id mismatch";
+                            return;
+                        }
+                        std::vector<int> vals(req->calibration_values.begin(), req->calibration_values.end());
+                        const IoError e = backend_.ioWriteRegister("gestureForceClb", vals);
+                        res->accepted = isOk(e);
+                        res->message = toString(e);
+                    });
                 logger->info("[{}] Service(Setgestureforceclb): {}", backend_.ioNodeName(), sc.set_service_name);
             } else if (reg == "actionLibraryIndex") {
                 maps_.services[sc.set_service_name] =
                     makeGroupedService<rh56dfx_interfaces::srv::Setactionlibraryindex>(
                         sc.set_service_name,
-                        [this](
-                            const rh56dfx_interfaces::srv::Setactionlibraryindex::Request::SharedPtr req,
-                            rh56dfx_interfaces::srv::Setactionlibraryindex::Response::SharedPtr res) {
+                        [this](const rh56dfx_interfaces::srv::Setactionlibraryindex::Request::SharedPtr req,
+                               rh56dfx_interfaces::srv::Setactionlibraryindex::Response::SharedPtr res) {
                             if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                                 res->accepted = false;
                                 res->message = "rejected: hand_id mismatch";
                                 return;
                             }
-                            const IoError e = backend_.ioWriteRegister("actionLibraryIndex", {static_cast<int>(req->index)});
+                            const IoError e =
+                                backend_.ioWriteRegister("actionLibraryIndex", {static_cast<int>(req->index)});
                             res->accepted = isOk(e);
                             res->message = toString(e);
                         });
                 logger->info("[{}] Service(Setactionlibraryindex): {}", backend_.ioNodeName(), sc.set_service_name);
             } else {
-                throw std::runtime_error(
-                    "[RH56DFX] 未映射的写寄存器服务: " + reg + "，请在 rh56dfx_interfaces 增加专用 .srv 并接线");
+                throw std::runtime_error("[RH56DFX] 未映射的写寄存器服务: " + reg +
+                                         "，请在 rh56dfx_interfaces 增加专用 .srv 并接线");
             }
         }
 
@@ -526,13 +490,11 @@ void RH56DFXInterfaceAdapter::wireServices() {
 
             if (reg == "errorCode") {
                 maps_.services[sc.get_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Geterror>(
-                    sc.get_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Geterror::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Geterror::Response::SharedPtr res) {
+                    sc.get_service_name, [this](const rh56dfx_interfaces::srv::Geterror::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Geterror::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             getLogger()->warn("[{}] 拒绝 Geterror: hand_id={}（本节点 Hand_ID={}）",
-                                backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
+                                              backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
                             for (size_t i = 0; i < kRH56DFXJoints; ++i) {
                                 res->joint_values[i] = 0;
                                 res->joint_names[i] = "";
@@ -544,8 +506,7 @@ void RH56DFXInterfaceAdapter::wireServices() {
                         const bool ok = rr.ok();
                         const auto& vals = rr.values;
                         for (size_t i = 0; i < kRH56DFXJoints; ++i) {
-                            res->joint_values[i] = (ok && i < vals.size())
-                                ? static_cast<int32_t>(vals[i]) : 0;
+                            res->joint_values[i] = (ok && i < vals.size()) ? static_cast<int32_t>(vals[i]) : 0;
                             res->joint_names[i] = configuredJointName(config_.joint_names, i);
                         }
                         res->message = toString(rr.error);
@@ -553,13 +514,11 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(GetError): {}", backend_.ioNodeName(), sc.get_service_name);
             } else if (reg == "temp") {
                 maps_.services[sc.get_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Gettemp>(
-                    sc.get_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Gettemp::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Gettemp::Response::SharedPtr res) {
+                    sc.get_service_name, [this](const rh56dfx_interfaces::srv::Gettemp::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Gettemp::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             getLogger()->warn("[{}] 拒绝 Gettemp: hand_id={}（本节点 Hand_ID={}）",
-                                backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
+                                              backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
                             for (size_t i = 0; i < kRH56DFXJoints; ++i) {
                                 res->joint_values[i] = 0;
                                 res->joint_names[i] = "";
@@ -571,8 +530,7 @@ void RH56DFXInterfaceAdapter::wireServices() {
                         const bool ok = rr.ok();
                         const auto& vals = rr.values;
                         for (size_t i = 0; i < kRH56DFXJoints; ++i) {
-                            res->joint_values[i] = (ok && i < vals.size())
-                                ? static_cast<int32_t>(vals[i]) : 0;
+                            res->joint_values[i] = (ok && i < vals.size()) ? static_cast<int32_t>(vals[i]) : 0;
                             res->joint_names[i] = configuredJointName(config_.joint_names, i);
                         }
                         res->message = toString(rr.error);
@@ -580,13 +538,11 @@ void RH56DFXInterfaceAdapter::wireServices() {
                 logger->info("[{}] Service(GetTemp): {}", backend_.ioNodeName(), sc.get_service_name);
             } else if (reg == "status") {
                 maps_.services[sc.get_service_name] = makeGroupedService<rh56dfx_interfaces::srv::Getstatus>(
-                    sc.get_service_name,
-                    [this](
-                        const rh56dfx_interfaces::srv::Getstatus::Request::SharedPtr req,
-                        rh56dfx_interfaces::srv::Getstatus::Response::SharedPtr res) {
+                    sc.get_service_name, [this](const rh56dfx_interfaces::srv::Getstatus::Request::SharedPtr req,
+                                                rh56dfx_interfaces::srv::Getstatus::Response::SharedPtr res) {
                         if (!rosIncomingHandIdTargetsThisNode(backend_, req->hand_id)) {
                             getLogger()->warn("[{}] 拒绝 Getstatus: hand_id={}（本节点 Hand_ID={}）",
-                                backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
+                                              backend_.ioNodeName(), req->hand_id, backend_.ioHandId());
                             for (size_t i = 0; i < kRH56DFXJoints; ++i) {
                                 res->joint_values[i] = 0;
                                 res->joint_names[i] = "";
@@ -598,16 +554,15 @@ void RH56DFXInterfaceAdapter::wireServices() {
                         const bool ok = rr.ok();
                         const auto& vals = rr.values;
                         for (size_t i = 0; i < kRH56DFXJoints; ++i) {
-                            res->joint_values[i] = (ok && i < vals.size())
-                                ? static_cast<int32_t>(vals[i]) : 0;
+                            res->joint_values[i] = (ok && i < vals.size()) ? static_cast<int32_t>(vals[i]) : 0;
                             res->joint_names[i] = configuredJointName(config_.joint_names, i);
                         }
                         res->message = toString(rr.error);
                     });
                 logger->info("[{}] Service(Getstatus): {}", backend_.ioNodeName(), sc.get_service_name);
             } else {
-                throw std::runtime_error(
-                    "[RH56DFX] 未映射的读寄存器服务: " + reg + "，请在 rh56dfx_interfaces 增加专用 .srv 并接线");
+                throw std::runtime_error("[RH56DFX] 未映射的读寄存器服务: " + reg +
+                                         "，请在 rh56dfx_interfaces 增加专用 .srv 并接线");
             }
         }
     }

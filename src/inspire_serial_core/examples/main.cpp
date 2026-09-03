@@ -3,11 +3,11 @@
 #include "logger_manager.hpp"
 #include "protocol.hpp"
 #include "serial_port.hpp"
-#include <atomic>
 #include <algorithm>
+#include <atomic>
 #include <chrono>
-#include <cstdlib>
 #include <csignal>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -23,9 +23,9 @@ std::atomic<bool> g_running(true);
 
 /** 控制模式：演示动画 / 固定角度 / 只读状态 */
 enum class ControlMode {
-    Demo,       // 自动开合演示（默认）
-    Fixed,      // 保持 --angles 或 --angles-file 指定的角度
-    ReadOnly,   // 只读 angleAct，不写 angleSet
+    Demo,     // 自动开合演示（默认）
+    Fixed,    // 保持 --angles 或 --angles-file 指定的角度
+    ReadOnly, // 只读 angleAct，不写 angleSet
 };
 
 struct ControlOptions {
@@ -86,7 +86,7 @@ std::vector<int> loadAnglesFromFile(const std::string& path) {
     throw std::invalid_argument("角度文件为空: " + path);
 }
 
-}  // namespace
+} // namespace
 
 /**
  * @brief 信号处理函数，用于优雅退出
@@ -122,9 +122,8 @@ void deviceControlThread(const std::string& deviceName, const std::string& port,
     // 每个设备使用独立的RingBuffer，避免数据竞争
     RingBuffer ringBuffer(1024);
 
-    std::vector<int> angles = options.fixed_angles.empty()
-                                  ? std::vector<int>{1800, 1800, 1800, 1800, 1350, 1800}
-                                  : options.fixed_angles;
+    std::vector<int> angles =
+        options.fixed_angles.empty() ? std::vector<int>{1800, 1800, 1800, 1800, 1350, 1800} : options.fixed_angles;
     bool joint_count_initialized = !options.fixed_angles.empty();
 
     const int min_angle = 965;
@@ -146,11 +145,9 @@ void deviceControlThread(const std::string& deviceName, const std::string& port,
             auto readResult = protocol->readRegister(device, ringBuffer, "angleAct", 0);
             if (!joint_count_initialized && readResult.ok() && !readResult.values.empty()) {
                 const size_t joint_count = readResult.values.size();
-                if (options.mode == ControlMode::Fixed &&
-                    options.fixed_angles.size() != joint_count) {
-                    throw std::runtime_error(
-                        "角度数量(" + std::to_string(options.fixed_angles.size()) +
-                        ")与设备关节数(" + std::to_string(joint_count) + ")不一致");
+                if (options.mode == ControlMode::Fixed && options.fixed_angles.size() != joint_count) {
+                    throw std::runtime_error("角度数量(" + std::to_string(options.fixed_angles.size()) +
+                                             ")与设备关节数(" + std::to_string(joint_count) + ")不一致");
                 }
                 if (options.mode == ControlMode::Demo) {
                     angles.assign(joint_count, 1800);
@@ -294,7 +291,7 @@ RunOptions parseRunOptions(int argc, char* argv[]) {
     return opts;
 }
 
-}  // namespace
+} // namespace
 
 int main(int argc, char* argv[]) {
     try {
@@ -355,8 +352,7 @@ int main(int argc, char* argv[]) {
             auto protocol = deviceProtocols[port];
 
             // 创建设备控制线程
-            deviceThreads.emplace_back(deviceControlThread, deviceInfo.name, port, device, protocol,
-                                       control_opts);
+            deviceThreads.emplace_back(deviceControlThread, deviceInfo.name, port, device, protocol, control_opts);
             threadDeviceNames.push_back(deviceInfo.name);
 
             logger->info("设备控制线程已创建: {} ({})", deviceInfo.name, port);

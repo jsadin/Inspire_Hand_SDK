@@ -140,14 +140,14 @@ TEST(EG5CD1Protocol, ParseResponseRejectsWrongHeader) {
 TEST(EG5CD1Protocol, ParseTouchDataVersion1) {
     auto p = makeProto();
     std::vector<uint8_t> body = {kRespHdr0, kRespHdr1, 0x01, static_cast<uint8_t>(20 + 3), 0x00, 0xB0, 0x04};
-    pushLE16(body, 100);   // normal right
-    pushLE16(body, 500);   // normal left
-    pushLE16(body, 200);   // tang dir right
-    pushLE16(body, 600);   // tang dir left
-    test_helpers::pushLE32(body, 300);  // proximity right
-    test_helpers::pushLE32(body, 700);  // proximity left
-    pushLE16(body, 400);   // tang force right
-    pushLE16(body, 800);   // tang force left
+    pushLE16(body, 100);               // normal right
+    pushLE16(body, 500);               // normal left
+    pushLE16(body, 200);               // tang dir right
+    pushLE16(body, 600);               // tang dir left
+    test_helpers::pushLE32(body, 300); // proximity right
+    test_helpers::pushLE32(body, 700); // proximity left
+    pushLE16(body, 400);               // tang force right
+    pushLE16(body, 800);               // tang force left
     auto frame = withChecksum(body);
 
     RingBuffer rb(128);

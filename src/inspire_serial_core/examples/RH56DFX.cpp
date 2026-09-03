@@ -41,8 +41,8 @@ void signalHandler(int signal) {
  * 3. 尝试读取触觉数据（touchAct，RH56DFX 预期不支持）
  * 控制频率：40Hz（25ms周期）
  */
-void deviceControlThread(const std::string& deviceName, const std::string& port,
-                         std::shared_ptr<SerialPortBase> device, std::shared_ptr<Protocol> protocol) {
+void deviceControlThread(const std::string& deviceName, const std::string& port, std::shared_ptr<SerialPortBase> device,
+                         std::shared_ptr<Protocol> protocol) {
     // 设置当前线程设备名（用于日志前缀）
     LoggerManager::setThreadDeviceName(deviceName);
 

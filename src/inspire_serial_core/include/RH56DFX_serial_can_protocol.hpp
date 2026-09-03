@@ -24,11 +24,8 @@ public:
     std::pair<bool, TouchDataResult> parseTouchData(RingBuffer& ringBuffer, int version) override;
 
     IoError writeRegister(Device device, const std::string& reg_name, const std::vector<int>& values) override;
-    RegisterReadResult readRegister(
-        Device device,
-        RingBuffer& ringBuffer,
-        const std::string& reg_name,
-        size_t length) override;
+    RegisterReadResult readRegister(Device device, RingBuffer& ringBuffer, const std::string& reg_name,
+                                    size_t length) override;
     TouchReadResult readTouchData(Device device, RingBuffer& ringBuffer, int version) override;
 
 protected:
@@ -55,14 +52,11 @@ protected:
     std::vector<uint8_t> readOneFrameRaw(Device device, int timeout_ms) const;
     std::vector<uint8_t> removeA5Escape(const std::vector<uint8_t>& raw) const;
 
-    bool parseAndValidateFrame(
-        const std::vector<uint8_t>& frame,
-        uint8_t expected_rw,
-        int expected_address,
-        std::vector<uint8_t>* out_payload,
-        uint8_t* out_valid_len) const;
+    bool parseAndValidateFrame(const std::vector<uint8_t>& frame, uint8_t expected_rw, int expected_address,
+                               std::vector<uint8_t>* out_payload, uint8_t* out_valid_len) const;
 
-    std::vector<uint8_t> encodeValuesByRule(const std::string& reg_name, const std::vector<int>& values, IoError* err) const;
+    std::vector<uint8_t> encodeValuesByRule(const std::string& reg_name, const std::vector<int>& values,
+                                            IoError* err) const;
     std::vector<int> decodeValuesByRule(const std::string& reg_name, const std::vector<uint8_t>& payload) const;
 
     // 触觉解析辅助（485 帧格式，与 RH5DG2 对齐；RH56DFX 无触觉硬件但保留完整解析框架）
@@ -70,4 +64,3 @@ protected:
     std::vector<uint8_t> extractFromRingBuffer(const RingBuffer& ringBuffer, size_t startOffset, size_t length) const;
     bool validate485FrameChecksum(const std::vector<uint8_t>& response) const;
 };
-

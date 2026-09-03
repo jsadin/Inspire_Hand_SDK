@@ -28,17 +28,14 @@ uint16_t decodeLE16(const std::vector<uint8_t>& response, size_t offset) {
     return static_cast<uint16_t>(response[offset] | (response[offset + 1] << 8));
 }
 
-int16_t toSigned16(uint16_t raw) {
-    return static_cast<int16_t>(raw);
-}
+int16_t toSigned16(uint16_t raw) { return static_cast<int16_t>(raw); }
 
 uint32_t decodeLE32(const std::vector<uint8_t>& response, size_t offset) {
     if (offset + 3 >= response.size()) {
         return 0;
     }
     return static_cast<uint32_t>(response[offset]) | (static_cast<uint32_t>(response[offset + 1]) << 8) |
-           (static_cast<uint32_t>(response[offset + 2]) << 16) |
-           (static_cast<uint32_t>(response[offset + 3]) << 24);
+           (static_cast<uint32_t>(response[offset + 2]) << 16) | (static_cast<uint32_t>(response[offset + 3]) << 24);
 }
 
 } // namespace
@@ -165,7 +162,7 @@ uint8_t EG5CD1_Protocol::readByteAtOffset(const RingBuffer& ringBuffer, size_t o
 }
 
 std::vector<uint8_t> EG5CD1_Protocol::extractFromRingBuffer(const RingBuffer& ringBuffer, size_t startOffset,
-                                                                size_t length) const {
+                                                            size_t length) const {
     std::vector<uint8_t> result(length);
     const std::vector<uint8_t>& buf = ringBuffer.getBuffer();
     size_t tailIndex = ringBuffer.getTail();
@@ -189,7 +186,7 @@ std::string EG5CD1_Protocol::formatBytesToHex(const uint8_t* data, size_t length
 }
 
 std::vector<uint8_t> EG5CD1_Protocol::readResponseWithLoop(Device device, int timeout_ms, size_t /*min_bytes*/,
-                                                               bool /*is_read_response*/) const {
+                                                           bool /*is_read_response*/) const {
     auto logger = getLogger();
     std::vector<uint8_t> response;
     const auto start_time = std::chrono::steady_clock::now();
@@ -452,7 +449,7 @@ std::pair<bool, TouchDataResult> EG5CD1_Protocol::parseTouchData(RingBuffer& rin
 
         ringBuffer.advance(startIdx + response_len);
         logger->debug("EG5CD1 成功解析触觉数据: right={} 字段, left={} 字段", result.fingerResults["right"].size(),
-                        result.fingerResults["left"].size());
+                      result.fingerResults["left"].size());
         return {true, std::move(result)};
     } catch (const std::exception& e) {
         logger->error("EG5CD1 触觉解析异常: {}", e.what());
@@ -474,8 +471,8 @@ TouchReadResult EG5CD1_Protocol::readTouchData(Device device, RingBuffer& ringBu
         }
 
         const auto readTouchCmd = buildReadCommand(touchAddress, kTouchSensorBlockBytes);
-        logger->debug("[EG5CD1 读取命令-触觉] 地址: 0x{:04X}, 长度: {}, 命令: {}", touchAddress,
-                      kTouchSensorBlockBytes, formatBytesToHex(readTouchCmd.data(), readTouchCmd.size()));
+        logger->debug("[EG5CD1 读取命令-触觉] 地址: 0x{:04X}, 长度: {}, 命令: {}", touchAddress, kTouchSensorBlockBytes,
+                      formatBytesToHex(readTouchCmd.data(), readTouchCmd.size()));
 
         device->write(readTouchCmd);
         const auto resp = readResponseWithLoop(device, kReadResponseTimeoutMs, 8, true);
@@ -585,7 +582,7 @@ IoError EG5CD1_Protocol::writeRegister(Device device, const std::string& reg_nam
 }
 
 RegisterReadResult EG5CD1_Protocol::readRegister(Device device, RingBuffer& ringBuffer, const std::string& reg_name,
-                                                     size_t length) {
+                                                 size_t length) {
     auto logger = getLogger();
     ringBuffer.clear();
 

@@ -19,13 +19,11 @@ TestableRH56DFXSerialCanProtocol makeProto() {
 }
 
 uint32_t decodeCanId(const std::vector<uint8_t>& frame) {
-    return static_cast<uint32_t>(frame[2]) |
-           (static_cast<uint32_t>(frame[3]) << 8) |
-           (static_cast<uint32_t>(frame[4]) << 16) |
-           (static_cast<uint32_t>(frame[5]) << 24);
+    return static_cast<uint32_t>(frame[2]) | (static_cast<uint32_t>(frame[3]) << 8) |
+           (static_cast<uint32_t>(frame[4]) << 16) | (static_cast<uint32_t>(frame[5]) << 24);
 }
 
-}  // namespace
+} // namespace
 
 // 寄存器名 -> 地址映射
 TEST(RH56DFXSerialCanProtocol, RegisterAddressLookup) {
@@ -46,7 +44,7 @@ TEST(RH56DFXSerialCanProtocol, ReadLengthForSingleByteFingerRegisters) {
 // 读命令帧结构正确（帧头帧尾、CAN ID、长度字段、校验和）
 TEST(RH56DFXSerialCanProtocol, BuildReadCommandFrameFormat) {
     auto p = makeProto();
-    auto frame = p.buildReadCommand(1618, 6);  // temp
+    auto frame = p.buildReadCommand(1618, 6); // temp
 
     ASSERT_EQ(frame.size(), 21u);
     EXPECT_EQ(frame[0], 0xAA);
@@ -62,7 +60,7 @@ TEST(RH56DFXSerialCanProtocol, BuildReadCommandFrameFormat) {
     EXPECT_EQ(address, 1618);
     EXPECT_EQ(hand_id, 1);
 
-    EXPECT_EQ(frame[6], 6u);  // 读取长度
+    EXPECT_EQ(frame[6], 6u); // 读取长度
     for (size_t i = 7; i < 14; ++i) {
         EXPECT_EQ(frame[i], 0u);
     }
@@ -73,7 +71,7 @@ TEST(RH56DFXSerialCanProtocol, BuildReadCommandFrameFormat) {
 // 写命令帧结构正确（数据区小端序，写长度字段=有效数据字节数）
 TEST(RH56DFXSerialCanProtocol, BuildWriteCommandFrameFormat) {
     auto p = makeProto();
-    auto frame = p.buildWriteCommand(1486, {100, -1});  // angleSet
+    auto frame = p.buildWriteCommand(1486, {100, -1}); // angleSet
 
     ASSERT_EQ(frame.size(), 21u);
     EXPECT_EQ(frame[0], 0xAA);

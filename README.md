@@ -1036,6 +1036,20 @@ ctest --test-dir build --output-on-failure
 
 状态徽章见 README 顶部；详细运行日志在 GitHub 仓库的 **Actions** 页。
 
+### 合入说明（2026-09-03）
+
+已按提交顺序把 qs-wq fork 上多出的改动合进本仓库（cherry-pick，不是整分支 merge）：
+
+1. RH56DFX 文档与单测加强  
+2. RH56H1 独立接口包 `rh56h1_interfaces`（不再复用 F1 包）  
+3. 新机型 **RH524J1**（`RH524J1_485`）与 **EG2-4C2**（`EG2_4C2_serial_can`）
+
+**必须保持不变：** EG-5CD1 的 `protocol.type` 仍是 **`EG5CD1`**（不是 `EG5CD1_485`）；触觉块 20 字节，接近觉为 uint32。CI 用 `grep` 统计测试、并用 `clang-format` 卡格式。
+
+**换机型时**请用对应示例 yaml（`device_protocol_*_example.yaml` + `ros2_controller_*_example.yaml`），不要误把仓库默认配置改成别的机型。通信规则见 [`docs/4C2夹爪CAN转Serial通信规则.md`](docs/4C2夹爪CAN转Serial通信规则.md)。厂商手册 PDF/DOC 与运行日志 `.ros_log` 不入库。
+
+**已知缺口：** 没有单独的 `inspire_control_rh524j1.launch.py`，用上面的单设备 launch + 示例 yaml 即可。增量编译后若测试程序报找不到新协议符号，删掉 `build/inspire_serial_core` 再编一次。
+
 ### 4. 配置设备
 
 编辑 **`src/driver/config/device_protocol_config.yaml`**（或与 launch 一致的 `--device-config` 路径）。`protocol.type` 决定机型（各机型示例见 `device_protocol_*_example.yaml`；下例以 `RH56F1_485` 演示，按需替换为 `RH524J1_485` / `RH56H1_canfd` / `RH56DFX_serial_can` / **`EG5CD1`** / `EG2_4C2_serial_can` 等）：
@@ -1573,5 +1587,5 @@ export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 
 ---
 
-**文档版本**：v1.3  
-**最后更新**：2026-07-07（RH56H1 位置百分比：100%=张开/0%=握紧）
+**文档版本**：v1.4  
+**最后更新**：2026-09-03（合入 RH56H1 独立接口、RH524J1、EG2-4C2；EG5CD1 类型名与触觉解析保持不变）

@@ -92,10 +92,19 @@ const std::map<std::string, size_t> EG2_4C2_serial_can_Protocol::REGISTER_READ_L
 
 // 寄存器写入规则：单帧最大写入数量
 const std::map<std::string, size_t> EG2_4C2_serial_can_Protocol::REGISTER_WRITE_RULE_MAX_COUNT = {
-    {"id", 1},         {"baud", 1},       {"catchMode", 1},  {"clearError", 1}, {"stop", 1}, {"save", 1},
-    {"defaultPar", 1}, {"maxOpenLen", 1}, {"minOpenLen", 1}, {"openLenSet", 4}, // 允许 position + speed + force
-                                                                                // 三寄存器连写
-    {"speedSet", 1},   {"forceSet", 1},
+    {"id", 1},
+    {"baud", 1},
+    {"catchMode", 1},
+    {"clearError", 1},
+    {"stop", 1},
+    {"save", 1},
+    {"defaultPar", 1},
+    {"maxOpenLen", 1},
+    {"minOpenLen", 1},
+    {"openLenSet", 4}, // 允许 position + speed + force
+                       // 三寄存器连写
+    {"speedSet", 1},
+    {"forceSet", 1},
 };
 
 // 不支持的寄存器

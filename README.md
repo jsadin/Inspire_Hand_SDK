@@ -15,6 +15,15 @@
 - ✅ **统一日志系统**：全局日志管理器，支持文件轮转和级别控制
 - ✅ **持续集成（CI）**：GitHub Actions 自动编译、跑单元测试与静态检查
 
+### 开发与规范
+
+加新产品、写提交、开 PR 请先看这两份短文（不要只改默认 yaml）：
+
+- **[docs/开发与Git约定.md](docs/开发与Git约定.md)**：分支命名、提交信息、CI、禁止入库、配置文件怎么起名
+- **[docs/新增机型清单.md](docs/新增机型清单.md)**：协议 → 接口包 → 适配器 → 示例 yaml → 文档的固定步骤和机型矩阵
+
+架构与线程模型见 [docs/项目架构说明.md](docs/项目架构说明.md)；给 AI 协作者的提示词见 [docs/项目提示词.md](docs/项目提示词.md)。
+
 ## 项目结构
 
 本仓库即一个 **colcon 工作区根目录**，`src/` 下为各平级包（单层 `src`，无嵌套工作区）：
@@ -44,7 +53,7 @@ serial_control/                        # = git 根 = colcon 工作区根
 │       ├── RH56DFX/                   #    rh56dfx_interfaces（Serial-CAN 灵巧手）
 │       ├── EG5CD1/                    #    eg5cd1_interfaces（EG-5CD1 夹爪）
 │       └── EG2_4C2/                   #    eg2_4c2_interfaces（EG2-4C2 Serial-CAN 夹爪）
-├── docs/                              # 全部文档集中存放（架构/模块/依赖/协议规则/厂商手册）
+├── docs/                              # 架构 / Git 约定 / 加机型清单 / 协议规则（手册 PDF 不强制入库）
 ├── scripts/                           # CI 辅助脚本（clang-format / clang-tidy 检查）
 ├── .github/workflows/                 # GitHub Actions CI 配置
 ├── install_dependencies.sh           # 依赖安装脚本（一键安装）
@@ -1565,27 +1574,11 @@ export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 
 ## 扩展开发
 
-### 添加新协议
+完整步骤、必改文件和自检见 **[docs/新增机型清单.md](docs/新增机型清单.md)**。Git 分支与提交见 **[docs/开发与Git约定.md](docs/开发与Git约定.md)**。
 
-1. 创建新协议类，继承`Protocol`
-2. 实现所有纯虚函数
-3. 使用`REGISTER_PROTOCOL`宏注册
-4. 在配置文件中指定协议类型
-
-### 添加新寄存器
-
-1. 在协议类的 `REGISTER_MAP` 中添加寄存器地址（及读长度等）
-2. 在对应机型的 interfaces 中增加专用 `srv`/`msg`（若需对外暴露）
-3. 在 **`(device)_interface_adapter.cpp`** 中为该寄存器接线
-4. 在 **`ros2_controller_config.yaml`** 中增加 `topics` 或 `services` 项
-
-### 添加新设备
-
-1. 在`device_protocol_config.yaml`中添加设备配置
-2. 在`ros2_controller_config.yaml`中添加设备节点配置
-3. 系统自动识别并启动
+摘要：新机型只加 `*_example.yaml`，不要改仓库默认配置；启动用现有 `inspire_control_single_device.launch.py` 指向示例文件。新协议必须 `REGISTER_PROTOCOL`、工厂显式分支（不要落到默认 RH5DG2）、并补 gtest。
 
 ---
 
-**文档版本**：v1.4  
-**最后更新**：2026-09-03（合入 RH56H1 独立接口、RH524J1、EG2-4C2；EG5CD1 类型名与触觉解析保持不变）
+**文档版本**：v1.5  
+**最后更新**：2026-09-10（补充开发与 Git 约定、新增机型清单；目录与三层包布局不变）

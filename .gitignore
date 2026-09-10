@@ -54,6 +54,8 @@ inspire_control_node
 *.swp
 *.swo
 *~
+# Cursor 本机规则，不入库
+.cursor/rules/rule1.mdc
 
 # --- Python（rosidl 生成、虚拟环境等）---
 __pycache__/
@@ -74,7 +76,7 @@ Thumbs.db
 
 # ===========================================================================
 # 注意：
-# 1) .cursor/rules/ 等规则文件需要入库，故不忽略整个 .cursor/。
+# 1) `.cursor/rules/rule1.mdc` 仅本机使用，已忽略；其它若需共享再单独入库。
 # 2) docs/ 下的 .md 文档需入库；其中的 .docx 二进制手册与锁文件被忽略
 #    （.doc/.pdf 厂商手册默认入库，如不需要可自行加入忽略）。
 # 3) 包导出模板 src/inspire_serial_core/cmake/*.cmake.in 为源文件，必须入库。

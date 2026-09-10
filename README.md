@@ -22,7 +22,7 @@
 - **[docs/开发与Git约定.md](docs/开发与Git约定.md)**：分支命名、提交信息、CI、禁止入库、配置文件怎么起名（机型示例一律 `*_example.yaml`；仓库默认 yaml 当前是 RH56H1 CAN-FD）
 - **[docs/新增机型清单.md](docs/新增机型清单.md)**：协议 → 接口包 → 适配器 → 示例 yaml → 文档的固定步骤和机型矩阵
 
-架构与线程模型见 [docs/项目架构说明.md](docs/项目架构说明.md)；给 AI 协作者的提示词见 [docs/项目提示词.md](docs/项目提示词.md)。
+架构与线程模型见 [docs/项目架构说明.md](docs/项目架构说明.md)；给 AI 协作者的**新增产品通用规则**见 [docs/项目提示词.md](docs/项目提示词.md)。
 
 ## 项目结构
 
@@ -1590,7 +1590,7 @@ export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 
 ## 扩展开发
 
-完整步骤、必改文件和自检见 **[docs/新增机型清单.md](docs/新增机型清单.md)**。Git 分支与提交见 **[docs/开发与Git约定.md](docs/开发与Git约定.md)**。
+完整步骤、必改文件和自检见 **[docs/新增机型清单.md](docs/新增机型清单.md)**。Git 分支与提交见 **[docs/开发与Git约定.md](docs/开发与Git约定.md)**。给 AI 的通用规则见 **[docs/项目提示词.md](docs/项目提示词.md)**。
 
 摘要：新机型只加 `*_example.yaml`，不要改仓库默认配置；启动用现有 `inspire_control_single_device.launch.py` 指向示例文件。新协议必须 `REGISTER_PROTOCOL`、工厂显式分支（不要落到默认 RH5DG2）、并补 gtest。
 
@@ -1599,4 +1599,4 @@ driver 侧 RH5DG2 / RH56F1 遗留文件名已统一为 `*_example.yaml`（`git m
 ---
 
 **文档版本**：v1.5  
-**最后更新**：2026-09-10（配置命名对齐 `*_example.yaml`；仓库默认仍是 RH56H1 CAN-FD）
+**最后更新**：2026-09-10（项目提示词改为新增产品通用规则；机型表只维护在新增机型清单）

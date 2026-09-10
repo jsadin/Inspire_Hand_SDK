@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "RH524J1_485_protocol.hpp"
+#include "protocol/hand/RH524J1_485_protocol.hpp"
 #include "ring_buffer.hpp"
 #include "test_helpers.hpp"
 

@@ -1,4 +1,4 @@
-#include "RH5DG2_485_protocol.hpp"
+#include "protocol/hand/RH5DG2_485_protocol.hpp"
 #include "logger_manager.hpp"   // 提供全局getLogger()
 #include "protocol_factory.hpp" // 用于协议注册
 

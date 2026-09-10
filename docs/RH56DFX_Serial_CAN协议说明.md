@@ -768,8 +768,8 @@ Serial-CAN 读回复（实测）：
 
 | 模块/文件 | 说明 |
 |-----------|------|
-| `src/inspire_serial_core/src/RH56DFX_serial_can_protocol.cpp` | 协议核心：组帧、读写寄存器、校验和 |
-| `src/inspire_serial_core/include/RH56DFX_serial_can_protocol.hpp` | 协议头文件与寄存器映射 |
+| `src/inspire_serial_core/src/protocol/hand/RH56DFX_serial_can_protocol.cpp` | 协议核心：组帧、读写寄存器、校验和 |
+| `src/inspire_serial_core/include/protocol/hand/RH56DFX_serial_can_protocol.hpp` | 协议头文件与寄存器映射 |
 | `src/driver/src/RH56DFX_interface_adapter.cpp` | ROS2 话题/服务适配 |
 
 ### 8.2 无 ROS 环境示例

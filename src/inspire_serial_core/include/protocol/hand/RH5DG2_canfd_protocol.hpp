@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RH5DG2_485_protocol.hpp"
+#include "protocol/hand/RH5DG2_485_protocol.hpp"
 
 /**
  * @brief RH5DG2 CAN-FD 协议实现类

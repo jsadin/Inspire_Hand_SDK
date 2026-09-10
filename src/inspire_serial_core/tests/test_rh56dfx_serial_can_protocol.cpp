@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "RH56DFX_serial_can_protocol.hpp"
+#include "protocol/hand/RH56DFX_serial_can_protocol.hpp"
 
 namespace {
 

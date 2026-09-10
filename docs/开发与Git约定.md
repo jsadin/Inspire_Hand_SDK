@@ -18,6 +18,8 @@
 
 `src/inspire_serial_core/config/` 里的 yaml 仅供裸库示例；ROS 启动以 `src/driver/config/` 为准。
 
+机型协议实现放在裸库内部的 `include/protocol/hand/`（灵巧手）与 `include/protocol/gripper/`（夹爪），对应 `.cpp` 在 `src/protocol/…`。`protocol.hpp`、`protocol_factory` 和串口/工人等基础设施仍在 `include/`、`src/` 顶层。这不是改 colcon 三层包。
+
 ---
 
 ## 2. 分支

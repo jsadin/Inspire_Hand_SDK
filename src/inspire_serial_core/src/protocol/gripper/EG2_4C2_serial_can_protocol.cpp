@@ -1,4 +1,4 @@
-#include "EG2_4C2_serial_can_protocol.hpp"
+#include "protocol/gripper/EG2_4C2_serial_can_protocol.hpp"
 #include "protocol_factory.hpp"
 
 #include <algorithm>

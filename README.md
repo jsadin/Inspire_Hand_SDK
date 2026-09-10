@@ -35,8 +35,8 @@ serial_control/                        # = git 根 = colcon 工作区根
 │   │   ├── package.xml                #    <build_type>cmake</build_type>，供 colcon 排序
 │   │   ├── CMakeLists.txt             #    构建 SHARED 库 + 安装/导出 find_package 配置
 │   │   ├── cmake/inspire_serial_coreConfig.cmake.in   # 导出配置模板（源文件，需入库）
-│   │   ├── include/                   #    protocol.hpp / io_error.hpp / *_protocol.hpp / serial_port.hpp ...
-│   │   ├── src/                       #    协议 / 串口 / 配置 / 日志实现
+│   │   ├── include/                   #    protocol.hpp、serial_port.hpp；机型协议在 protocol/hand|gripper/
+│   │   ├── src/                       #    串口 / 配置 / 日志；机型协议在 protocol/hand|gripper/
 │   │   ├── examples/                  #    main.cpp 多设备并行控制示例（serial_hand_control_node）
 │   │   ├── config/                    #    device_protocol_config.yaml、device_protocol_rh56f1_example.yaml、device_protocol_rh5dg2_example.yaml ...
 │   │   └── tests/                     #    gtest 单元测试（RingBuffer / DeviceWorker / 三款 485 协议，不依赖硬件）
@@ -1592,11 +1592,11 @@ export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 
 完整步骤、必改文件和自检见 **[docs/新增机型清单.md](docs/新增机型清单.md)**。Git 分支与提交见 **[docs/开发与Git约定.md](docs/开发与Git约定.md)**。给 AI 的通用规则见 **[docs/项目提示词.md](docs/项目提示词.md)**。
 
-摘要：新机型只加 `*_example.yaml`，不要改仓库默认配置；启动用现有 `inspire_control_single_device.launch.py` 指向示例文件。新协议必须 `REGISTER_PROTOCOL`、工厂显式分支（不要落到默认 RH5DG2）、并补 gtest。
+摘要：新机型只加 `*_example.yaml`，不要改仓库默认配置；启动用现有 `inspire_control_single_device.launch.py` 指向示例文件。新协议放在 `include/src/protocol/hand` 或 `gripper`，必须 `REGISTER_PROTOCOL`、工厂显式分支（不要落到默认 RH5DG2）、并补 gtest。
 
 driver 侧 RH5DG2 / RH56F1 遗留文件名已统一为 `*_example.yaml`（`git mv` 保留历史）。裸库 `src/inspire_serial_core/config/` 里给非 ROS 示例用的短名 `RH5DG2.yaml` / `RH56F1.yaml` 未改，避免搅动 `examples/main.cpp`。后续若再加机型，只新增一对 example，不要再引入 `device_protocol_config_<model>.yaml` 这种旧别名。
 
 ---
 
 **文档版本**：v1.5  
-**最后更新**：2026-09-10（项目提示词改为新增产品通用规则；机型表只维护在新增机型清单）
+**最后更新**：2026-09-10（机型协议按手/夹爪放到 protocol/hand 与 protocol/gripper）

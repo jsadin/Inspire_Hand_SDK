@@ -1,4 +1,4 @@
-#include "RH524J1_485_protocol.hpp"
+#include "protocol/hand/RH524J1_485_protocol.hpp"
 #include "logger_manager.hpp"
 #include "protocol_factory.hpp"
 

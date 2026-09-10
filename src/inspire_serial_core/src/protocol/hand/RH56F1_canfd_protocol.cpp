@@ -1,4 +1,4 @@
-#include "RH56F1_canfd_protocol.hpp"
+#include "protocol/hand/RH56F1_canfd_protocol.hpp"
 #include "logger_manager.hpp"
 #include "protocol_factory.hpp"
 

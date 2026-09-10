@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "EG5CD1_protocol.hpp"
+#include "protocol/gripper/EG5CD1_protocol.hpp"
 #include "ring_buffer.hpp"
 #include "test_helpers.hpp"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RH5DG2_485_protocol.hpp"
+#include "protocol/hand/RH5DG2_485_protocol.hpp"
 
 #include <map>
 #include <string>

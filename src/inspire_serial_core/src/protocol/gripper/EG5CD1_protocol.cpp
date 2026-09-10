@@ -1,4 +1,4 @@
-#include "EG5CD1_protocol.hpp"
+#include "protocol/gripper/EG5CD1_protocol.hpp"
 #include "logger_manager.hpp"
 #include "protocol_factory.hpp"
 

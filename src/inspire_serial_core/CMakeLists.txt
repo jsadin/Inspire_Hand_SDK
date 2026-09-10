@@ -24,16 +24,16 @@ add_library(inspire_serial_core SHARED
     src/serial_port.cpp
     src/device_manager.cpp
     src/ring_buffer.cpp
-    src/RH56F1_485_protocol.cpp
-    src/RH56H1_485_protocol.cpp
-    src/RH56DFX_serial_can_protocol.cpp
-    src/RH5DG2_485_protocol.cpp
-    src/EG5CD1_protocol.cpp
-    src/EG2_4C2_serial_can_protocol.cpp
-    src/RH524J1_485_protocol.cpp
-    src/RH56F1_canfd_protocol.cpp
-    src/RH56H1_canfd_protocol.cpp
-    src/RH5DG2_canfd_protocol.cpp
+    src/protocol/hand/RH56F1_485_protocol.cpp
+    src/protocol/hand/RH56H1_485_protocol.cpp
+    src/protocol/hand/RH56DFX_serial_can_protocol.cpp
+    src/protocol/hand/RH5DG2_485_protocol.cpp
+    src/protocol/hand/RH524J1_485_protocol.cpp
+    src/protocol/hand/RH56F1_canfd_protocol.cpp
+    src/protocol/hand/RH56H1_canfd_protocol.cpp
+    src/protocol/hand/RH5DG2_canfd_protocol.cpp
+    src/protocol/gripper/EG5CD1_protocol.cpp
+    src/protocol/gripper/EG2_4C2_serial_can_protocol.cpp
     src/config_loader.cpp
     src/protocol_factory.cpp
     src/logger_manager.cpp

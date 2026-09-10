@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "RH56F1_485_protocol.hpp"
+#include "protocol/hand/RH56F1_485_protocol.hpp"
 #include "ring_buffer.hpp"
 #include "test_helpers.hpp"
 

@@ -1,9 +1,13 @@
-#include "RH56F1_485_protocol.hpp"
+#include "protocol/hand/RH56H1_485_protocol.hpp"
 #include "logger_manager.hpp"   // 提供全局getLogger()
 #include "protocol_factory.hpp" // 用于协议注册
 
+#include <algorithm>
+#include <cstring>
+#include <set>
+
 // 寄存器字典
-const std::map<std::string, int> RH56F1_485_Protocol::REGISTER_MAP = {{"id", 1000},
+const std::map<std::string, int> RH56H1_485_Protocol::REGISTER_MAP = {{"id", 1000},
                                                                       {"baudRate", 1001},
                                                                       {"clearError", 1003},
                                                                       {"save", 1004},
@@ -31,7 +35,7 @@ const std::map<std::string, int> RH56F1_485_Protocol::REGISTER_MAP = {{"id", 100
                                                                       {"touchAct", 3000}};
 
 // 寄存器默认读取长度映射表（字节数）
-const std::map<std::string, size_t> RH56F1_485_Protocol::REGISTER_READ_LENGTH_MAP = {
+const std::map<std::string, size_t> RH56H1_485_Protocol::REGISTER_READ_LENGTH_MAP = {
     // 多值寄存器（6个自由度，12字节）
     {"angleSet", 12},
     {"angleAct", 12},
@@ -63,7 +67,7 @@ const std::map<std::string, size_t> RH56F1_485_Protocol::REGISTER_READ_LENGTH_MA
     // {"touchAct", 68},  // 触觉数据使用专门的readTouchData函数
 };
 
-size_t RH56F1_485_Protocol::getDefaultReadLength(const std::string& reg_name) const {
+size_t RH56H1_485_Protocol::getDefaultReadLength(const std::string& reg_name) const {
     auto it = REGISTER_READ_LENGTH_MAP.find(reg_name);
     if (it != REGISTER_READ_LENGTH_MAP.end()) {
         return it->second;
@@ -72,12 +76,95 @@ size_t RH56F1_485_Protocol::getDefaultReadLength(const std::string& reg_name) co
     return 12;
 }
 
-int RH56F1_485_Protocol::getRegisterAddress(const std::string& register_name) const {
+int RH56H1_485_Protocol::getRegisterAddress(const std::string& register_name) const {
     auto it = REGISTER_MAP.find(register_name);
     return (it != REGISTER_MAP.end()) ? it->second : -1;
 }
 
-std::vector<uint8_t> RH56F1_485_Protocol::buildWriteCommand(int address, const std::vector<int>& values) {
+static const std::vector<size_t> VALID_FRAME_LENGTHS = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
+
+size_t RH56H1_485_Protocol::adjustToValidFrameLength(size_t requested_bytes) const {
+    if (std::find(VALID_FRAME_LENGTHS.begin(), VALID_FRAME_LENGTHS.end(), requested_bytes) !=
+        VALID_FRAME_LENGTHS.end()) {
+        return requested_bytes;
+    }
+    if (requested_bytes > 64) {
+        return 64;
+    }
+    for (size_t valid_len : VALID_FRAME_LENGTHS) {
+        if (valid_len >= requested_bytes) {
+            return valid_len;
+        }
+    }
+    return 64;
+}
+
+std::vector<uint8_t> RH56H1_485_Protocol::readRegisterBytes(Device device, int start_addr, size_t byte_len,
+                                                            const char* log_context) {
+    auto logger = getLogger();
+    const std::string ctx = log_context ? std::string(log_context) : "485";
+
+    std::vector<uint8_t> payload;
+    payload.reserve(byte_len);
+    size_t remaining_bytes = byte_len;
+    int current_address = start_addr;
+
+    while (remaining_bytes > 0) {
+        const size_t logical_frame_bytes = (remaining_bytes > 64) ? 64 : remaining_bytes;
+        const size_t frame_bytes = adjustToValidFrameLength(logical_frame_bytes);
+        auto cmd = buildReadCommand(current_address, frame_bytes);
+        logger->debug("[{}-读取命令] 地址: 0x{:04X}, 逻辑剩余: {} 字节, 实际发送: {} 字节, 命令: {}", ctx,
+                      current_address, remaining_bytes, frame_bytes, formatBytesToHex(cmd.data(), cmd.size()));
+
+        device->write(cmd);
+        auto resp = readResponseWithLoop(device, 25, 8, true);
+        if (resp.empty() || !validateChecksum(resp) || resp.size() < 8 || resp[4] != 0x11 || resp[3] < 3) {
+            logger->warn("[{}] 地址 0x{:04X} 响应无效，本段以 0 填充", ctx, current_address);
+            break;
+        }
+
+        const size_t register_length = static_cast<size_t>(resp[3]) - 3;
+        const size_t bytes_to_use = std::min(register_length, logical_frame_bytes);
+        const size_t data_start = 7;
+        if (resp.size() < data_start + bytes_to_use) {
+            logger->warn("[{}] 地址 0x{:04X} 响应长度不足，本段以 0 填充", ctx, current_address);
+            break;
+        }
+
+        for (size_t i = 0; i < bytes_to_use; ++i) {
+            payload.push_back(resp[data_start + i]);
+        }
+        remaining_bytes -= bytes_to_use;
+        current_address += static_cast<int>(bytes_to_use / 2);
+    }
+
+    payload.resize(byte_len, 0);
+    return payload;
+}
+
+void RH56H1_485_Protocol::applyRegisterDecodeRule(const std::string& reg_name, std::vector<int>& values) const {
+    if (reg_name == "temp" || reg_name == "errorCode" || reg_name == "status") {
+        for (int& v : values) {
+            v = v & 0xFF;
+        }
+        return;
+    }
+    if (reg_name == "forceAct") {
+        return;
+    }
+    static const std::set<std::string> kUnsignedRegs = {
+        "angleAct", "angleSet",        "speedSet",        "forceSet", "currentAct", "currentSet",     "posAct",
+        "posSet",   "defaultSpeedSet", "defaultForceSet", "mode",     "id",         "baudRate",       "clearError",
+        "save",     "resetPara",       "gestureForceClb", "pause",    "stop",       "actionSeqIndex", "actionSeqRun",
+    };
+    if (kUnsignedRegs.count(reg_name) > 0) {
+        for (int& v : values) {
+            v = static_cast<int>(static_cast<uint16_t>(v & 0xFFFF));
+        }
+    }
+}
+
+std::vector<uint8_t> RH56H1_485_Protocol::buildWriteCommand(int address, const std::vector<int>& values) {
     if (values.size() > 6) {
         throw std::runtime_error("超过允许的值数量，最多只能写入6个值");
     }
@@ -108,7 +195,7 @@ std::vector<uint8_t> RH56F1_485_Protocol::buildWriteCommand(int address, const s
     return cmd;
 }
 
-std::vector<uint8_t> RH56F1_485_Protocol::buildReadCommand(int address, size_t length) {
+std::vector<uint8_t> RH56H1_485_Protocol::buildReadCommand(int address, size_t length) {
     std::vector<uint8_t> cmd = {
         0xEB,
         0x90,                                        // 帧头
@@ -130,7 +217,7 @@ std::vector<uint8_t> RH56F1_485_Protocol::buildReadCommand(int address, size_t l
 }
 
 // 辅助函数：从环形缓冲区读取指定偏移位置的字节
-uint8_t RH56F1_485_Protocol::readByteAtOffset(const RingBuffer& ringBuffer, size_t offset) const {
+uint8_t RH56H1_485_Protocol::readByteAtOffset(const RingBuffer& ringBuffer, size_t offset) const {
     size_t bufSize = ringBuffer.size();
     if (offset >= bufSize) {
         return 0xFF; // 超出范围
@@ -142,7 +229,7 @@ uint8_t RH56F1_485_Protocol::readByteAtOffset(const RingBuffer& ringBuffer, size
 }
 
 // 辅助函数：从环形缓冲区提取指定范围的数据（仅在需要校验时才调用）
-std::vector<uint8_t> RH56F1_485_Protocol::extractFromRingBuffer(const RingBuffer& ringBuffer, size_t startOffset,
+std::vector<uint8_t> RH56H1_485_Protocol::extractFromRingBuffer(const RingBuffer& ringBuffer, size_t startOffset,
                                                                 size_t length) const {
     std::vector<uint8_t> result(length);
     const std::vector<uint8_t>& buf = ringBuffer.getBuffer();
@@ -156,7 +243,7 @@ std::vector<uint8_t> RH56F1_485_Protocol::extractFromRingBuffer(const RingBuffer
 }
 
 // 辅助函数：将字节数组格式化为十六进制字符串（用于debug日志）
-std::string RH56F1_485_Protocol::formatBytesToHex(const uint8_t* data, size_t length) const {
+std::string RH56H1_485_Protocol::formatBytesToHex(const uint8_t* data, size_t length) const {
     std::ostringstream oss;
     oss << std::hex << std::uppercase;
     for (size_t i = 0; i < length; ++i) {
@@ -168,7 +255,7 @@ std::string RH56F1_485_Protocol::formatBytesToHex(const uint8_t* data, size_t le
 }
 
 // 循环读取响应数据，直到接收到足够字节或超时
-std::vector<uint8_t> RH56F1_485_Protocol::readResponseWithLoop(Device device, int timeout_ms, size_t min_bytes,
+std::vector<uint8_t> RH56H1_485_Protocol::readResponseWithLoop(Device device, int timeout_ms, size_t min_bytes,
                                                                bool is_read_response) const {
     auto logger = getLogger();
     std::vector<uint8_t> response;
@@ -304,7 +391,7 @@ std::vector<uint8_t> RH56F1_485_Protocol::readResponseWithLoop(Device device, in
 }
 
 //常规解析函数
-std::pair<bool, std::vector<int>> RH56F1_485_Protocol::parseResponse(RingBuffer& ringBuffer) {
+std::pair<bool, std::vector<int>> RH56H1_485_Protocol::parseResponse(RingBuffer& ringBuffer) {
     auto logger = getLogger(); // 获取日志对象
 
     try {
@@ -434,7 +521,7 @@ std::pair<bool, std::vector<int>> RH56F1_485_Protocol::parseResponse(RingBuffer&
 }
 
 // 触觉数据解析
-std::pair<bool, TouchDataResult> RH56F1_485_Protocol::parseTouchData(RingBuffer& ringBuffer, int version) {
+std::pair<bool, TouchDataResult> RH56H1_485_Protocol::parseTouchData(RingBuffer& ringBuffer, int version) {
     auto logger = getLogger(); // 获取日志对象
 
     try {
@@ -589,9 +676,66 @@ std::pair<bool, TouchDataResult> RH56F1_485_Protocol::parseTouchData(RingBuffer&
             return {true, std::move(result)}; // 使用移动语义
 
         } else if (version == 2) {
-            // 版本2的解析逻辑（待实现）
-            logger->warn("触觉数据版本2暂未实现");
-            return {false, {}};
+            // 版本2（压阻式）：规范负载 580 字节，已由 readTouchData 分段读取后 push 进缓冲
+            static const size_t kTotalBytes = 580;
+            if (bufSize < kTotalBytes) {
+                logger->error("触觉V2数据长度不足: 需要 {} 字节, 实际 {} 字节", kTotalBytes, bufSize);
+                return {false, {}};
+            }
+
+            static const char* kFingerNames[] = {"pinky", "ring", "middle", "index", "thumb"};
+            static const size_t kTipEndCount = 4;
+            static const size_t kTipTouchCount = 30;
+
+            auto read_byte = [&](size_t off) -> uint8_t { return readByteAtOffset(ringBuffer, off); };
+            auto read_i16 = [&](size_t off) -> int16_t {
+                const uint8_t lo = read_byte(off);
+                const uint8_t hi = read_byte(off + 1);
+                return static_cast<int16_t>(static_cast<uint16_t>(lo | (hi << 8)));
+            };
+            auto read_f32 = [&](size_t off) -> float {
+                uint8_t bytes[4];
+                for (int i = 0; i < 4; ++i) {
+                    bytes[i] = read_byte(off + static_cast<size_t>(i));
+                }
+                float value = 0.0f;
+                std::memcpy(&value, bytes, sizeof(value));
+                return value;
+            };
+
+            TouchDataResult result;
+            size_t offset = 0;
+            for (const char* finger_name : kFingerNames) {
+                TouchDataResult::FingerTouchV2 finger;
+                finger.tip_end.reserve(kTipEndCount);
+                for (size_t k = 0; k < kTipEndCount; ++k) {
+                    finger.tip_end.push_back(read_i16(offset));
+                    offset += 2;
+                }
+                finger.tip_touch.reserve(kTipTouchCount);
+                for (size_t k = 0; k < kTipTouchCount; ++k) {
+                    finger.tip_touch.push_back(read_i16(offset));
+                    offset += 2;
+                }
+                finger.force_x = read_f32(offset);
+                offset += 4;
+                finger.force_y = read_f32(offset);
+                offset += 4;
+                finger.force_z = read_f32(offset);
+                offset += 4;
+                result.fingerResultsV2[finger_name] = std::move(finger);
+            }
+
+            result.palmResultsV2.reserve(90);
+            for (size_t k = 0; k < 90; ++k) {
+                result.palmResultsV2.push_back(read_i16(offset));
+                offset += 2;
+            }
+
+            ringBuffer.advance(kTotalBytes);
+            logger->debug("成功解析触觉数据(V2): {} 个手指, {} 个掌心数据点", result.fingerResultsV2.size(),
+                          result.palmResultsV2.size());
+            return {true, std::move(result)};
         } else {
             // 未知版本
             logger->error("未知的触觉数据版本: {}", version);
@@ -604,7 +748,7 @@ std::pair<bool, TouchDataResult> RH56F1_485_Protocol::parseTouchData(RingBuffer&
 }
 
 // 校验和验证函数
-bool RH56F1_485_Protocol::validateChecksum(const std::vector<uint8_t>& response) const {
+bool RH56H1_485_Protocol::validateChecksum(const std::vector<uint8_t>& response) const {
     if (response.size() < 9) {
         // 至少需要9字节（写寄存器回复的最小长度）
         return false;
@@ -634,7 +778,7 @@ bool RH56F1_485_Protocol::validateChecksum(const std::vector<uint8_t>& response)
 }
 
 // 写寄存器
-IoError RH56F1_485_Protocol::writeRegister(Device device, const std::string& reg_name, const std::vector<int>& values) {
+IoError RH56H1_485_Protocol::writeRegister(Device device, const std::string& reg_name, const std::vector<int>& values) {
 
     std::ostringstream oss;
     auto logger = getLogger(); // 获取日志对象
@@ -774,7 +918,7 @@ IoError RH56F1_485_Protocol::writeRegister(Device device, const std::string& reg
 }
 
 // 读寄存器
-RegisterReadResult RH56F1_485_Protocol::readRegister(Device device, RingBuffer& ringBuffer, const std::string& reg_name,
+RegisterReadResult RH56H1_485_Protocol::readRegister(Device device, RingBuffer& ringBuffer, const std::string& reg_name,
                                                      size_t length) {
 
     std::ostringstream oss;
@@ -797,47 +941,55 @@ RegisterReadResult RH56F1_485_Protocol::readRegister(Device device, RingBuffer& 
         logger->debug("[动态长度] 寄存器: {}, 自动确定读取长度: {} 字节", reg_name, length);
     }
 
+    constexpr int kMaxReadAttempts = 2;
+    IoError last_error = IoError::Timeout;
+
     try {
         auto cmd = buildReadCommand(address, length);
-
-        // Debug日志：记录读取命令
         logger->debug("[读取命令] 寄存器: {}, 地址: 0x{:04X}, 长度: {}, 命令: {}", reg_name, address, length,
                       formatBytesToHex(cmd.data(), cmd.size()));
 
-        device->write(cmd);
-        // 循环读取读回复（动态长度），超时25ms
-        auto response = readResponseWithLoop(device, 25, 8, true);
+        for (int attempt = 1; attempt <= kMaxReadAttempts; ++attempt) {
+            ringBuffer.clear();
+            device->write(cmd);
+            auto response = readResponseWithLoop(device, 25, 8, true);
 
-        // Debug日志：记录原始响应
-        if (!response.empty()) {
-            logger->debug("[原始响应] 寄存器: {}, 响应: {}", reg_name,
-                          formatBytesToHex(response.data(), response.size()));
-        } else {
-            logger->debug("[原始响应] 寄存器: {}, 响应为空", reg_name);
-        }
-
-        if (response.empty()) {
-            logger->error("读取寄存器失败：{} (无响应)", reg_name);
-            return {IoError::Timeout, {}};
-        }
-
-        ringBuffer.push(response.data(), response.size());
-        auto result = parseResponse(ringBuffer);
-        if (result.first) {
-            // 打印读取寄存器内容
-            oss << "读取" << reg_name << ":(";
-            for (size_t i = 0; i < result.second.size(); ++i) {
-                oss << result.second[i];
-                if (i != result.second.size() - 1)
-                    oss << " ";
+            if (!response.empty()) {
+                logger->debug("[原始响应] 寄存器: {}, 响应: {}", reg_name,
+                              formatBytesToHex(response.data(), response.size()));
+            } else {
+                logger->debug("[原始响应] 寄存器: {}, 响应为空", reg_name);
             }
-            oss << ")";
-            logger->info(oss.str()); // 使用日志输出
-            return {IoError::Ok, std::move(result.second)};
-        } else {
-            logger->error("读取寄存器失败：{}", reg_name);
-            return {IoError::BadResponse, {}};
+
+            if (response.empty()) {
+                last_error = IoError::Timeout;
+            } else {
+                ringBuffer.push(response.data(), response.size());
+                auto result = parseResponse(ringBuffer);
+                if (result.first) {
+                    applyRegisterDecodeRule(reg_name, result.second);
+                    oss.str("");
+                    oss << "读取" << reg_name << ":(";
+                    for (size_t i = 0; i < result.second.size(); ++i) {
+                        oss << result.second[i];
+                        if (i != result.second.size() - 1)
+                            oss << " ";
+                    }
+                    oss << ")";
+                    logger->info(oss.str());
+                    return {IoError::Ok, std::move(result.second)};
+                }
+                last_error = IoError::BadResponse;
+            }
+
+            if (attempt < kMaxReadAttempts) {
+                logger->warn("读取寄存器 {} 第{}次失败（{}），重试...", reg_name, attempt,
+                             last_error == IoError::Timeout ? "无响应" : "帧错位");
+            }
         }
+
+        logger->error("读取寄存器失败：{}{}", reg_name, last_error == IoError::Timeout ? " (无响应)" : "");
+        return {last_error, {}};
     } catch (...) {
         logger->error("读取寄存器异常：{}", reg_name);
         return {IoError::DeviceError, {}};
@@ -845,25 +997,105 @@ RegisterReadResult RH56F1_485_Protocol::readRegister(Device device, RingBuffer& 
 }
 
 // 读取触觉数据
-TouchReadResult RH56F1_485_Protocol::readTouchData(Device device, RingBuffer& ringBuffer, int version) {
+TouchReadResult RH56H1_485_Protocol::readTouchData(Device device, RingBuffer& ringBuffer, int version) {
     std::ostringstream oss;
-    auto logger = getLogger(); // 获取日志对象
+    auto logger = getLogger();
+
+    if (version == 2) {
+        try {
+            ringBuffer.clear();
+
+            struct FingerSeg {
+                int tip_end_addr;
+                int tip_touch_addr;
+                int force_addr;
+            };
+            static const FingerSeg kFingers[5] = {
+                {3000, 3004, 3034}, {3040, 3044, 3074}, {3080, 3084, 3114}, {3120, 3124, 3154}, {3160, 3164, 3194},
+            };
+            static const int kPalmAddr = 3200;
+            static const size_t kTipEndBytes = 8;
+            static const size_t kTipTouchBytes = 60;
+            static const size_t kForceBytes = 12;
+            static const size_t kPalmBytes = 180;
+            static const size_t kFingerBytes = kTipEndBytes + kTipTouchBytes + kForceBytes;
+            static const size_t kTotalBytes = kFingerBytes * 5 + kPalmBytes;
+
+            auto readSegment = [&](int address, size_t byteLen) {
+                return readRegisterBytes(device, address, byteLen, "触觉V2");
+            };
+
+            std::vector<uint8_t> canonical;
+            canonical.reserve(kTotalBytes);
+            for (const auto& f : kFingers) {
+                auto te = readSegment(f.tip_end_addr, kTipEndBytes);
+                auto tt = readSegment(f.tip_touch_addr, kTipTouchBytes);
+                auto fo = readSegment(f.force_addr, kForceBytes);
+                canonical.insert(canonical.end(), te.begin(), te.end());
+                canonical.insert(canonical.end(), tt.begin(), tt.end());
+                canonical.insert(canonical.end(), fo.begin(), fo.end());
+            }
+            auto palm = readSegment(kPalmAddr, kPalmBytes);
+            canonical.insert(canonical.end(), palm.begin(), palm.end());
+
+            if (ringBuffer.getBuffer().size() < canonical.size()) {
+                logger->error("[触觉V2] 环形缓冲容量不足: 需要 {} 字节, 实际 {} 字节", canonical.size(),
+                              ringBuffer.getBuffer().size());
+                return {IoError::BadResponse, {}};
+            }
+            ringBuffer.push(canonical.data(), canonical.size());
+            auto result = parseTouchData(ringBuffer, version);
+
+            if (result.first) {
+                const TouchDataResult& touchData = result.second;
+                oss << "读取touchAct(V2):(";
+                for (const auto& finger_pair : touchData.fingerResultsV2) {
+                    oss << finger_pair.first << "[tip_end:";
+                    for (size_t i = 0; i < finger_pair.second.tip_end.size(); ++i) {
+                        oss << finger_pair.second.tip_end[i];
+                        if (i + 1 < finger_pair.second.tip_end.size())
+                            oss << " ";
+                    }
+                    oss << " tip_touch:";
+                    for (size_t i = 0; i < finger_pair.second.tip_touch.size(); ++i) {
+                        oss << finger_pair.second.tip_touch[i];
+                        if (i + 1 < finger_pair.second.tip_touch.size())
+                            oss << " ";
+                    }
+                    oss << " force:(" << finger_pair.second.force_x << "," << finger_pair.second.force_y << ","
+                        << finger_pair.second.force_z << ")] ";
+                }
+                oss << "palm:";
+                for (size_t i = 0; i < touchData.palmResultsV2.size(); ++i) {
+                    oss << touchData.palmResultsV2[i];
+                    if (i + 1 < touchData.palmResultsV2.size())
+                        oss << " ";
+                }
+                oss << ")";
+                logger->info(oss.str());
+            } else {
+                logger->error("读取触觉寄存器失败(版本2)");
+                return {IoError::BadResponse, {}};
+            }
+            return {IoError::Ok, std::move(result.second)};
+        } catch (...) {
+            logger->error("读取触觉寄存器异常(版本2)");
+            return {IoError::DeviceError, {}};
+        }
+    }
+
     try {
-        // 读取前清空环形缓冲，避免历史帧干扰当前解析
         ringBuffer.clear();
 
         int touchAddress = getRegisterAddress("touchAct");
         auto readTouchCmd = buildReadCommand(touchAddress, 68);
 
-        // Debug日志：记录触觉数据读取命令
         logger->debug("[读取命令-触觉] 地址: 0x{:04X}, 长度: 68, 命令: {}", touchAddress,
                       formatBytesToHex(readTouchCmd.data(), readTouchCmd.size()));
 
         device->write(readTouchCmd);
-        // 循环读取触觉数据回复（动态长度），超时25ms
         auto resp = readResponseWithLoop(device, 25, 8, true);
 
-        // Debug日志：记录触觉数据原始响应
         if (!resp.empty()) {
             logger->debug("[原始响应-触觉] 响应: {}", formatBytesToHex(resp.data(), resp.size()));
         } else {
@@ -873,11 +1105,9 @@ TouchReadResult RH56F1_485_Protocol::readTouchData(Device device, RingBuffer& ri
         ringBuffer.push(resp.data(), resp.size());
         auto result = parseTouchData(ringBuffer, version);
 
-        // 如果解析成功，打印内容
         if (result.first) {
             const TouchDataResult& touchData = result.second;
             oss << "读取touchAct:(";
-            // 打印手指触觉信息
             for (const auto& finger_pair : touchData.fingerResults) {
                 oss << finger_pair.first << ":";
                 for (size_t i = 0; i < finger_pair.second.size(); ++i) {
@@ -887,12 +1117,11 @@ TouchReadResult RH56F1_485_Protocol::readTouchData(Device device, RingBuffer& ri
                 }
                 oss << " ";
             }
-            // 打印掌心触觉信息
             for (const auto& palm_pair : touchData.palmResults) {
                 oss << palm_pair.first << ":" << palm_pair.second << " ";
             }
             oss << ")";
-            logger->info(oss.str()); // 使用日志输出
+            logger->info(oss.str());
         } else {
             logger->error("读取触觉寄存器失败");
             return {IoError::BadResponse, {}};
@@ -904,6 +1133,6 @@ TouchReadResult RH56F1_485_Protocol::readTouchData(Device device, RingBuffer& ri
     }
 }
 
-// 自动注册RH56F1_485协议
+// 自动注册RH56H1_485协议
 // 程序启动时会自动调用此注册，无需手动注册
-REGISTER_PROTOCOL("RH56F1_485", RH56F1_485_Protocol);
+REGISTER_PROTOCOL("RH56H1_485", RH56H1_485_Protocol);

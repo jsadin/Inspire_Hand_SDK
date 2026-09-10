@@ -106,9 +106,8 @@ colcon test --packages-select inspire_serial_core
 
 | 用途 | 文件名 | 说明 |
 |------|--------|------|
-| 机型示例 | `device_protocol_<model>_example.yaml` + `ros2_controller_<model>_example.yaml` | 新机型必须用此命名；随包安装，启动时用 launch 参数指向它们 |
+| 机型示例 | `device_protocol_<model>_example.yaml` + `ros2_controller_<model>_example.yaml` | 已统一为此命名；随包安装，启动时用 launch 参数指向它们 |
 | 仓库默认 | `device_protocol_config.yaml` + `ros2_controller_config.yaml` | **当前默认是 RH56H1 CAN-FD**，不要拿它当新产品的唯一配置 |
-| 遗留别名 | `device_protocol_config_rh5dg2.yaml`、`ros2_controller_config_rh5dg2.yaml`、`ros2_controller_config_rh56f1.yaml` | 暂时保留，新机型不要再用这种名字 |
 
 `protocol.type`：一般写成 `<MODEL>_<bus>`（如 `RH524J1_485`、`EG2_4C2_serial_can`）。**已冻结例外**：EG-5CD1 必须写 `EG5CD1`，不是 `EG5CD1_485`。
 

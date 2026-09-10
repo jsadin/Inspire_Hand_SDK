@@ -1,4 +1,5 @@
-# RH56H1 CAN-FD 示例配置（ROS2 节点 --device-config 指向本文件）
+# 仓库默认设备配置（当前机型：RH56H1 CAN-FD）。
+# launch 未指定 --device-config 时加载本文件；换机型请用对应 device_protocol_*_example.yaml，不要覆盖本文件当新产品配置。
 protocol:
   type: RH56H1_canfd
 

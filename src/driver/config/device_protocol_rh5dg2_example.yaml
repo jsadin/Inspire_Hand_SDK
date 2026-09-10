@@ -1,5 +1,5 @@
-# RH5DG2（13 自由度）RS485 设备配置 —— 硬件测试用
-# 配合 ros2_controller_config_rh5dg2.yaml；单设备模式启动：--device hand_left
+# RH5DG2（13 自由度）RS485 设备配置示例
+# 配合 ros2_controller_rh5dg2_example.yaml；启动时 --device-config / --controller-config 指向这两份文件
 
 protocol:
   type: RH5DG2_485

@@ -19,7 +19,7 @@
 
 加新产品、写提交、开 PR 请先看这两份短文（不要只改默认 yaml）：
 
-- **[docs/开发与Git约定.md](docs/开发与Git约定.md)**：分支命名、提交信息、CI、禁止入库、配置文件怎么起名
+- **[docs/开发与Git约定.md](docs/开发与Git约定.md)**：分支命名、提交信息、CI、禁止入库、配置文件怎么起名（机型示例一律 `*_example.yaml`；仓库默认 yaml 当前是 RH56H1 CAN-FD）
 - **[docs/新增机型清单.md](docs/新增机型清单.md)**：协议 → 接口包 → 适配器 → 示例 yaml → 文档的固定步骤和机型矩阵
 
 架构与线程模型见 [docs/项目架构说明.md](docs/项目架构说明.md)；给 AI 协作者的提示词见 [docs/项目提示词.md](docs/项目提示词.md)。
@@ -1083,6 +1083,22 @@ ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
   device_name:=hand_left
 ```
 
+不传配置参数时，加载仓库默认 `device_protocol_config.yaml` + `ros2_controller_config.yaml`（当前为 **RH56H1 CAN-FD**）。换机型请指向对应 `*_example.yaml`，不要覆盖默认文件：
+
+```bash
+# RH5DG2
+ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
+  device_name:=hand_left \
+  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh5dg2_example.yaml \
+  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh5dg2_example.yaml
+
+# RH56F1
+ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
+  device_name:=hand_left \
+  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh56f1_example.yaml \
+  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh56f1_example.yaml
+```
+
 #### 多设备模式
 
 ```bash
@@ -1578,7 +1594,9 @@ export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 
 摘要：新机型只加 `*_example.yaml`，不要改仓库默认配置；启动用现有 `inspire_control_single_device.launch.py` 指向示例文件。新协议必须 `REGISTER_PROTOCOL`、工厂显式分支（不要落到默认 RH5DG2）、并补 gtest。
 
+driver 侧 RH5DG2 / RH56F1 遗留文件名已统一为 `*_example.yaml`（`git mv` 保留历史）。裸库 `src/inspire_serial_core/config/` 里给非 ROS 示例用的短名 `RH5DG2.yaml` / `RH56F1.yaml` 未改，避免搅动 `examples/main.cpp`。后续若再加机型，只新增一对 example，不要再引入 `device_protocol_config_<model>.yaml` 这种旧别名。
+
 ---
 
 **文档版本**：v1.5  
-**最后更新**：2026-09-10（补充开发与 Git 约定、新增机型清单；目录与三层包布局不变）
+**最后更新**：2026-09-10（配置命名对齐 `*_example.yaml`；仓库默认仍是 RH56H1 CAN-FD）

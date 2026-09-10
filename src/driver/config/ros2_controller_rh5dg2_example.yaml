@@ -1,4 +1,4 @@
-# ROS2设备节点配置文件
+# RH5DG2 ROS2 控制器示例（配合 device_protocol_rh5dg2_example.yaml）
 # 一个设备对应一个节点，每个节点可以同时包含多个话题和服务
 
 device_nodes:
@@ -106,6 +106,11 @@ device_nodes:
        # 动作序列设置服务
       - register_name: "actionSeqIndex"
         set_service_name: "/hand_left/set_actionSeqIndex"
+        is_write_register: true
+
+       # 动作库设置服务
+      - register_name: "actionLibraryIndex"
+        set_service_name: "/hand_left/set_actionLibraryIndex"
         is_write_register: true
 
       # 获取故障码服务
@@ -224,6 +229,9 @@ device_nodes:
         set_service_name: "/hand_right/set_actionSeqIndex"
         is_write_register: true
 
+       # 动作库设置服务
+      - register_name: "actionLibraryIndex"
+        set_service_name: "/hand_right/set_actionLibraryIndex"
         is_write_register: true
 
       # 获取故障码服务

@@ -819,7 +819,6 @@ hand.set_angle(500)  →  CANFrame(can_id,data) → frame_to_tx_bytes()
 |------|------|
 | `src/inspire_serial_core/examples/RH56DFX.cpp` | RH56DFX 纯 C++ 读写示例 |
 | `src/inspire_serial_core/examples/main.cpp` | 多设备控制入口（支持 demo/固定角度/只读） |
-| `docs/Hand_control.cpp` | 早期 ROS2 服务参考实现（485 机型） |
 
 ---
 

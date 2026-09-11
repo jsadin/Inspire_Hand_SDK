@@ -36,7 +36,7 @@ protected:
     size_t getDefaultReadLength(const std::string& reg_name) const;
 
     /**
-     * @brief 按寄存器语义修正解码结果，与 docs/Hand_control.cpp 及协议手册一致
+     * @brief 按寄存器语义修正解码结果，与协议手册一致
      */
     void applyRegisterDecodeRule(const std::string& reg_name, std::vector<int>& values) const;
 

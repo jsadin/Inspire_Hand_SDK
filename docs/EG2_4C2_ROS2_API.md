@@ -2,7 +2,7 @@
 
 本文描述 `inspire_control_ros2` 在 **EG2-4C2**（`protocol.type: EG2_4C2_serial_can`）下的话题、组合服务与运动自检。USB-CAN 转串口的帧格式、ExtId、Modbus 地址见 [4C2夹爪CAN转Serial通信规则.md](4C2夹爪CAN转Serial通信规则.md)。
 
-启动与短节入口见仓库 [README.md](../README.md)。**不要用仓库默认 yaml**（默认是 RH56H1 CAN-FD）。手册与厂商 demo 冲突时以跑通的 demo 为准。
+启动与短节入口见仓库 [README.md](../README.md)。请用本机型 `*_example.yaml`。手册与厂商 demo 冲突时以跑通的 demo 为准。
 
 ---
 

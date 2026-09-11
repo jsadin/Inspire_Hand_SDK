@@ -1,6 +1,4 @@
-# 仓库默认 ROS2 控制器配置（当前机型：RH56H1 CAN-FD）。
-# 与 ros2_controller_rh56h1_example.yaml 内容一致；触觉 version2，touch_control.touch_version=2。
-# launch 未指定 --controller-config 时加载本文件；换机型请用对应 ros2_controller_*_example.yaml，不要覆盖本文件当新产品配置。
+# launch 未指定 --controller-config 时的占位配置。日常启动请按机型选用 ros2_controller_*_example.yaml。
 
 device_nodes:
   - device: hand_left

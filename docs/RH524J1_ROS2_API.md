@@ -2,7 +2,7 @@
 
 本文描述 `inspire_control_ros2` 在 **RH524J1**（`protocol.type: RH524J1_485`）下的关节顺序、话题/服务与自检。帧格式与 RH5DG2 相同（`EB 90`），见 [RH5DG2_485协议格式说明.md](RH5DG2_485协议格式说明.md)；寄存器地址来自 `065demo/hand_param.h`。
 
-启动与短节入口见仓库 [README.md](../README.md)。**不要用仓库默认 yaml**（默认是 RH56H1 CAN-FD）。
+启动与短节入口见仓库 [README.md](../README.md)。请用本机型 `*_example.yaml`。
 
 ---
 
@@ -23,7 +23,7 @@
 colcon build --packages-select inspire_control_ros2
 source install/setup.bash
 
-# 3) 用 RH524J1 示例配置启动（不要用仓库默认 yaml，默认仍是其它机型）
+# 3) 用 RH524J1 示例配置启动
 ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
   device_name:=hand_left \
   device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh524j1_example.yaml \

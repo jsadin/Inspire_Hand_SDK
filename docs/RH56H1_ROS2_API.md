@@ -1,6 +1,6 @@
 # RH56H1 ROS2 API 说明
 
-本文描述 `inspire_control_ros2` 在 **RH56H1**（`RH56H1_485` / `RH56H1_canfd`）下的百分比接口、raw 话题/服务与触觉 version2。帧格式与 RH56F1 相同，见 [RH56F1_485协议格式说明.md](RH56F1_485协议格式说明.md)。仓库默认 yaml 当前就是 H1 CAN-FD。
+本文描述 `inspire_control_ros2` 在 **RH56H1**（`RH56H1_485` / `RH56H1_canfd`）下的百分比接口、raw 话题/服务与触觉 version2。帧格式与 RH56F1 相同，见 [RH56F1_485协议格式说明.md](RH56F1_485协议格式说明.md)。
 
 启动与短节入口见仓库 [README.md](../README.md)。
 
@@ -33,12 +33,15 @@
 > - **速度第 6 指（大拇指旋转）例外**：手册大拇指旋转 `speedSet(1057)` 范围为 **0~20**，而非 0~3000，当前代码对该指仍按 0~3000 换算，故 `speed_percent` 对大拇指旋转**不准确**；请对其速度改用 raw 接口（`speedSet`）直接给 0~20。
 > - **力 / 电流第 6 指**：手册对大拇指旋转 `forceSet(1051)`、`currentSet(1021)` 标注 `\`（舵机通道未单独定义量程），百分比换算对该指仅为近似。
 
-- **配置**：`ros2_controller_config.yaml` 与 `ros2_controller_rh56h1_example.yaml` 均已包含百分比接口；launch 默认加载前者。
-- **启动**（修改 `device_protocol_config.yaml` 中 `port`、`Hand_ID` 后执行）：
+- **配置**：用 `device_protocol_rh56h1_canfd_example.yaml`（或 485 的 `device_protocol_rh56h1_example.yaml`）+ `ros2_controller_rh56h1_example.yaml`。先改示例里的 `port`、`Hand_ID`。
+- **启动**：
 
 ```bash
 source install/setup.bash
-ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py device_name:=hand_left
+ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
+  device_name:=hand_left \
+  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh56h1_canfd_example.yaml \
+  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh56h1_example.yaml
 ```
 
 ### 关节顺序（`joint_values[6]`）

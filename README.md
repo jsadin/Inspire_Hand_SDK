@@ -19,7 +19,7 @@
 
 加新产品、写提交、开 PR 请先看这两份短文（不要只改默认 yaml）：
 
-- **[docs/开发与Git约定.md](docs/开发与Git约定.md)**：分支命名、提交信息、CI、禁止入库、配置文件怎么起名（机型示例一律 `*_example.yaml`；仓库默认 yaml 当前是 RH56H1 CAN-FD）
+- **[docs/开发与Git约定.md](docs/开发与Git约定.md)**：分支命名、提交信息、CI、禁止入库、配置文件怎么起名（机型示例一律 `*_example.yaml`，启动时按自己的机型选用）
 - **[docs/新增机型清单.md](docs/新增机型清单.md)**：协议 → 接口包 → 适配器 → 示例 yaml → 文档的固定步骤和机型矩阵
 
 架构与线程模型见 [docs/项目架构说明.md](docs/项目架构说明.md)；给 AI 协作者的**新增产品通用规则**见 [docs/项目提示词.md](docs/项目提示词.md)。
@@ -92,19 +92,70 @@ serial_control/                        # = git 根 = colcon 工作区根
 
 ## 机型说明
 
-完整话题/服务与自检写在各机型 `docs/` 里。这里只给启动入口。换机型请用 `*_example.yaml`，不要覆盖仓库默认配置（当前默认是 **RH56H1 CAN-FD**）。
+完整话题/服务与自检写在各机型 `docs/` 里。这里只给启动入口。**按自己手上的机型**选对应 `*_example.yaml`，同时传 `device_config` 和 `controller_config`。
 
 ### RH56H1
 
 - **协议**：`RH56H1_485` / `RH56H1_canfd`；接口包 `rh56h1_interfaces`
-- **示例**：`device_protocol_rh56h1_example.yaml`、`device_protocol_rh56h1_canfd_example.yaml`、`ros2_controller_rh56h1_example.yaml`
-- **默认**：不传 launch 配置参数时，就是本机型 CAN-FD
+- **示例**：`device_protocol_rh56h1_example.yaml`（485）、`device_protocol_rh56h1_canfd_example.yaml`（CAN-FD）、`ros2_controller_rh56h1_example.yaml`
 
 ```bash
-ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py device_name:=hand_left
+# CAN-FD（常见）
+ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
+  device_name:=hand_left \
+  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh56h1_canfd_example.yaml \
+  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh56h1_example.yaml
 ```
 
 百分比接口、raw 命令、触觉 `TouchData2` 见 [docs/RH56H1_ROS2_API.md](docs/RH56H1_ROS2_API.md)。
+
+### RH56F1
+
+6 关节，电容触觉 version1。帧与 H1 相同，**没有百分比接口**。
+
+- **协议**：`RH56F1_485` / `RH56F1_canfd`；接口包 `rh56f1_interfaces`
+- **示例**：`device_protocol_rh56f1_example.yaml`、`ros2_controller_rh56f1_example.yaml`
+
+```bash
+ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
+  device_name:=hand_left \
+  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh56f1_example.yaml \
+  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh56f1_example.yaml
+```
+
+话题/服务、触觉 `TouchData1` 与自检见 [docs/RH56F1_ROS2_API.md](docs/RH56F1_ROS2_API.md)；485 帧见 [docs/RH56F1_485协议格式说明.md](docs/RH56F1_485协议格式说明.md)。
+
+### RH56DFX
+
+6 关节 Serial-CAN（USB-CAN 转串口）。角度 0～1000。无触觉硬件。
+
+- **协议**：`RH56DFX_serial_can`；接口包 `rh56dfx_interfaces`
+- **示例**：`device_protocol_rh56dfx_example.yaml`、`ros2_controller_rh56dfx_example.yaml`
+
+```bash
+ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
+  device_name:=hand_left \
+  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh56dfx_example.yaml \
+  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh56dfx_example.yaml
+```
+
+话题/服务与自检见 [docs/RH56DFX_ROS2_API.md](docs/RH56DFX_ROS2_API.md)；通信规则见 [docs/RH56DFX_Serial_CAN协议说明.md](docs/RH56DFX_Serial_CAN协议说明.md)。
+
+### RH5DG2
+
+13 关节灵巧手，RS485（也有 `RH5DG2_canfd`）。
+
+- **协议**：`RH5DG2_485` / `RH5DG2_canfd`；接口包 `rh5dg2_interfaces`
+- **示例**：`device_protocol_rh5dg2_example.yaml`、`ros2_controller_rh5dg2_example.yaml`
+
+```bash
+ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
+  device_name:=hand_left \
+  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh5dg2_example.yaml \
+  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh5dg2_example.yaml
+```
+
+13 路数组、话题/服务与自检见 [docs/RH5DG2_ROS2_API.md](docs/RH5DG2_ROS2_API.md)；485 帧见 [docs/RH5DG2_485协议格式说明.md](docs/RH5DG2_485协议格式说明.md)。
 
 ### EG-5CD1
 
@@ -140,7 +191,7 @@ ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
 
 ### RH524J1
 
-因时 065 腱绳手，**24** 自由度，RS485，帧同 RH5DG2。无触觉。**不要用仓库默认 yaml。**
+因时 065 腱绳手，**24** 自由度，RS485，帧同 RH5DG2。无触觉。
 
 - **协议**：`RH524J1_485`；接口包 `rh524j1_interfaces`
 - **示例**：`device_protocol_rh524j1_example.yaml`、`ros2_controller_rh524j1_example.yaml`
@@ -292,7 +343,7 @@ ctest --test-dir build --output-on-failure
 
 ### 4. 配置设备
 
-编辑 **`src/driver/config/device_protocol_config.yaml`**（或与 launch 一致的 `--device-config` 路径）。`protocol.type` 决定机型（各机型示例见 `device_protocol_*_example.yaml`；下例以 `RH56F1_485` 演示，按需替换为 `RH524J1_485` / `RH56H1_canfd` / `RH56DFX_serial_can` / **`EG5CD1`** / `EG2_4C2_serial_can` 等）：
+按机型打开对应的 **`device_protocol_*_example.yaml`**，改 `port`、`Hand_ID`。`protocol.type` 必须和机型一致（下例以 `RH56F1_485` 演示，按需换成 `RH56H1_canfd` / `RH5DG2_485` / `RH56DFX_serial_can` / `RH524J1_485` / **`EG5CD1`** / `EG2_4C2_serial_can` 等）：
 
 ```yaml
 protocol:
@@ -309,25 +360,13 @@ devices:
 
 #### 单设备模式
 
-```bash
-ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
-  device_name:=hand_left
-```
-
-不传配置参数时，加载仓库默认 `device_protocol_config.yaml` + `ros2_controller_config.yaml`（当前为 **RH56H1 CAN-FD**）。换机型请指向对应 `*_example.yaml`，不要覆盖默认文件：
+按自己的机型同时指定 `device_config` 和 `controller_config`，完整命令见上文「机型说明」。例如 RH56H1 CAN-FD：
 
 ```bash
-# RH5DG2
 ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
   device_name:=hand_left \
-  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh5dg2_example.yaml \
-  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh5dg2_example.yaml
-
-# RH56F1
-ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
-  device_name:=hand_left \
-  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh56f1_example.yaml \
-  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh56f1_example.yaml
+  device_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/device_protocol_rh56h1_canfd_example.yaml \
+  controller_config:=$(ros2 pkg prefix inspire_control_ros2)/share/inspire_control_ros2/config/ros2_controller_rh56h1_example.yaml
 ```
 
 #### 多设备模式
@@ -338,125 +377,21 @@ ros2 launch inspire_control_ros2 inspire_control_multi_device.launch.py
 
 ### 6. 使用示例
 
-以下示例假定 **`protocol.type`** 为 RH5DG2 系列（**13** 个关节）。若为 **RH56F1** 请用 **`rh56f1_interfaces`**、**RH56H1** 请用 **`rh56h1_interfaces`**，且 **`joint_values` 长度为 6**。也可用 `ros2 interface show <包名>/<类型>` 查看字段。
+入站话题/服务里的 **`hand_id`** 必须等于该设备 yaml 的 **`Hand_ID`**，否则写寄存器会被拒绝（`accepted: false`）或订阅被忽略。**`hand_id: 0`** 视为未指定，本节点仍接受。
 
-**`hand_id` 与节点绑定**：入站 Topic/Service 中的 **`hand_id`** 须与 **`device_protocol_config.yaml`** 里该设备的 **`Hand_ID`** 一致，否则节点会拒绝写寄存器（`accepted: false`）或忽略订阅回调；**`hand_id: 0`** 视为未指定，仍会被本节点接受（兼容不指定id）。
+各机型数组长度、话题/服务和自检写在对应 API 文里，不要抄错接口包：
 
-#### 发布控制命令（话题模式）
+| 机型 | 关节数 | 接口包 | API |
+|------|--------|--------|-----|
+| RH56F1 | 6 | `rh56f1_interfaces` | [docs/RH56F1_ROS2_API.md](docs/RH56F1_ROS2_API.md) |
+| RH56H1 | 6 | `rh56h1_interfaces` | [docs/RH56H1_ROS2_API.md](docs/RH56H1_ROS2_API.md) |
+| RH56DFX | 6 | `rh56dfx_interfaces` | [docs/RH56DFX_ROS2_API.md](docs/RH56DFX_ROS2_API.md) |
+| RH5DG2 | 13 | `rh5dg2_interfaces` | [docs/RH5DG2_ROS2_API.md](docs/RH5DG2_ROS2_API.md) |
+| RH524J1 | 24 | `rh524j1_interfaces` | [docs/RH524J1_ROS2_API.md](docs/RH524J1_ROS2_API.md) |
+| EG-5CD1 | 夹爪 1 | `eg5cd1_interfaces` | [docs/EG5CD1_ROS2_API.md](docs/EG5CD1_ROS2_API.md) |
+| EG2-4C2 | 夹爪 1 | `eg2_4c2_interfaces` | [docs/EG2_4C2_ROS2_API.md](docs/EG2_4C2_ROS2_API.md) |
 
-```bash
-# 角度命令（示例数值请按现场标定修改）
-ros2 topic pub --once /hand_left/angle_set rh5dg2_interfaces/msg/SetAngle1 \
-  "{hand_id: 1, joint_values: [100,100,100,100,100,100,100,100,100,100,100,100,100]}"
-```
-
-#### 订阅状态数据（话题模式）
-
-```bash
-ros2 topic echo /hand_left/angle_actual
-```
-
-#### 调用服务（服务模式）
-
-```bash
-# 角度设置服务（与寄存器 angleSet 对应）
-ros2 service call /hand_left/set_angle rh5dg2_interfaces/srv/Setangle \
-  "{command: '', hand_id: 1, joint_values: [100,100,100,100,100,100,100,100,100,100,100,100,100]}"
-
-# 读取故障码（示例）
-ros2 service call /hand_left/get_errorCode rh5dg2_interfaces/srv/Geterror \
-  "{query: '', hand_id: 1}"
-
-# 设置设备通信 ID
-ros2 service call /hand_left/set_id rh5dg2_interfaces/srv/Setid \
-  "{hand_id: 1, device_id: 1}"
-```
-
-#### RH5DG2 角度循环测试脚本
-
-`test/` 目录提供两个 Python 脚本，用于在真机上做 min→max→min 三角波角度循环联调。**默认测试全部 13 个关节**（`--joints all --mode sync`）：
-
-```bash
-source install/setup.bash
-
-# 话题模式：13 关节同步循环
-python3 test/test_rh5dg2_angle_topic.py --device hand_left --hand-id 1
-
-# 服务模式：13 关节同步循环
-python3 test/test_rh5dg2_angle_service.py --device hand_left --hand-id 1
-
-# 逐关节依次测试（每次只动一个关节，其余保持固定姿态）
-python3 test/test_rh5dg2_angle_topic.py --mode sequential
-python3 test/test_rh5dg2_angle_service.py --mode sequential
-
-# 只测部分关节（例如前四指）
-python3 test/test_rh5dg2_angle_topic.py --joints 0,1,2,3
-```
-
-常用参数：`--mode sync|sequential`、`--joints all|0,1,...`、`--step` 步进、`--min`/`--max` 循环范围（默认 965~1800）、`--rate` 发布频率、`--fixed-angles` sequential 模式下非活动关节固定姿态。
-
-脚本可拷贝到任意目录运行，任选一种方式加载环境即可：
-
-```bash
-# 方式 1：source 工作区（推荐）
-source /opt/ros/jazzy/setup.bash
-source /path/to/Inspire_Hand_SDK-master/install/setup.bash
-python3 /任意路径/test_rh5dg2_angle_topic.py
-
-# 方式 2：环境变量指定 install 目录
-export INSPIRE_HAND_SDK_INSTALL=/path/to/Inspire_Hand_SDK-master/install
-python3 /任意路径/test_rh5dg2_angle_topic.py
-```
-
-启动节点示例：
-
-```bash
-ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py device_name:=hand_left
-```
-
-#### RH56DFX 服务/Topic 收发自检
-
-当 `protocol.type: RH56DFX_serial_can` 时，可用以下步骤快速确认「服务是否可调用」「Topic 是否正常收发」：
-
-```bash
-# 0) 确保环境干净（避免多节点重名导致结果混乱）
-pkill -f inspire_control_node || true
-
-# 1) 启动 RH56DFX 单设备节点
-ros2 launch inspire_control_ros2 inspire_control_single_device.launch.py \
-  device_name:=hand_left
-```
-
-另开一个终端执行：
-
-```bash
-source install/setup.bash
-
-# 2) 节点与服务类型检查（应只有 1 个 /hand_left/hand_left_node）
-ros2 node list
-ros2 service type /hand_left/get_status
-
-# 3) 服务读测试（RH56DFX 接口包）
-ros2 service call /hand_left/get_status rh56dfx_interfaces/srv/Getstatus \
-  "{query: '', hand_id: 1}"
-ros2 service call /hand_left/get_errorCode rh56dfx_interfaces/srv/Geterror \
-  "{query: '', hand_id: 1}"
-ros2 service call /hand_left/get_temp rh56dfx_interfaces/srv/Gettemp \
-  "{query: '', hand_id: 1}"
-
-# 4) Topic 写+读联调（6 个关节）
-ros2 topic echo /hand_left/angle_actual
-ros2 topic pub --once /hand_left/angle_set rh56dfx_interfaces/msg/SetAngle1 \
-  "{hand_id: 1, joint_values: [100,100,100,100,100,100]}"
-```
-
-判定建议：
-
-- **服务链路正常**：命令出现 `response:`，且 `message='ok'`。
-- **设备通信异常**：有 `response:` 但 `message='device_error'`（说明 ROS2 服务通，但设备侧收发失败）。
-- **服务未就绪**：长时间 `waiting for service to become available...`（通常是节点未启动/命名空间不匹配）。
-- **Topic 正常**：`/hand_left/angle_set` 下发后，`/hand_left/angle_actual` 在后续周期出现可观测变化。
-- **Topic 被忽略**：`hand_id` 与配置 `Hand_ID` 不一致时，订阅回调会忽略该命令。
+查看字段：`ros2 interface show <包名>/<类型>`。
 
 ## 文档说明
 
@@ -488,7 +423,7 @@ ros2 topic pub --once /hand_left/angle_set rh56dfx_interfaces/msg/SetAngle1 \
 
 ### 协议格式说明
 
-📖 **[docs/RH56F1_485协议格式说明.md](docs/RH56F1_485协议格式说明.md)**（另见 `docs/RH5DG2_485协议格式说明.md`、`docs/RH56DFX_Serial_CAN协议解析.md`、`docs/夹爪485寄存器规则.md`、`docs/EG5CD1协议格式说明.md`、`docs/EG5CD1_ROS2_API.md`、`docs/EG2_4C2_ROS2_API.md`、`docs/RH56H1_ROS2_API.md`、`docs/RH524J1_ROS2_API.md`、`docs/4C2夹爪CAN转Serial通信规则.md`）
+📖 **[docs/RH56F1_485协议格式说明.md](docs/RH56F1_485协议格式说明.md)**（另见 `docs/RH5DG2_485协议格式说明.md`、`docs/RH56DFX_Serial_CAN协议解析.md`、`docs/夹爪485寄存器规则.md`、`docs/EG5CD1协议格式说明.md`、`docs/4C2夹爪CAN转Serial通信规则.md`）
 
 包含：
 - 读写请求格式
@@ -499,7 +434,10 @@ ros2 topic pub --once /hand_left/angle_set rh56dfx_interfaces/msg/SetAngle1 \
 
 ### 机型 ROS2 API
 
+- [docs/RH56F1_ROS2_API.md](docs/RH56F1_ROS2_API.md)：6 轴 raw、触觉 version1
 - [docs/RH56H1_ROS2_API.md](docs/RH56H1_ROS2_API.md)：百分比 / raw / 触觉 version2
+- [docs/RH56DFX_ROS2_API.md](docs/RH56DFX_ROS2_API.md)：Serial-CAN、0～1000 角度、无触觉
+- [docs/RH5DG2_ROS2_API.md](docs/RH5DG2_ROS2_API.md)：13 轴、话题/服务、自检
 - [docs/RH524J1_ROS2_API.md](docs/RH524J1_ROS2_API.md)：24 轴顺序、话题/服务、自检
 - [docs/EG5CD1_ROS2_API.md](docs/EG5CD1_ROS2_API.md)：夹爪话题、组合服务、触觉
 - [docs/EG2_4C2_ROS2_API.md](docs/EG2_4C2_ROS2_API.md)：组合服务、运动自检（帧格式见 4C2 通信规则）
@@ -513,7 +451,7 @@ ros2 topic pub --once /hand_left/angle_set rh56dfx_interfaces/msg/SetAngle1 \
 - 话题约 50Hz 定时读；服务按需 set/get；组合动作走 `ioWriteSequence`（步间隔 3ms）
 - 每台设备一个工人、一个串口；不要两台手共用同一个 `port`
 - 读写错误用 `IoError`，经 `.srv` 的 `message` 回给调用方
-- 配置与启动见上文「快速开始」第 4、5 节；不要覆盖仓库默认 yaml
+- 配置与启动见上文「机型说明」和第 4、5 节；按机型选用 `*_example.yaml`
 
 ## 常见问题
 
@@ -598,11 +536,11 @@ export PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 
 完整步骤、必改文件和自检见 **[docs/新增机型清单.md](docs/新增机型清单.md)**。Git 分支与提交见 **[docs/开发与Git约定.md](docs/开发与Git约定.md)**。给 AI 的通用规则见 **[docs/项目提示词.md](docs/项目提示词.md)**。
 
-摘要：新机型只加 `*_example.yaml`，不要改仓库默认配置；启动用现有 `inspire_control_single_device.launch.py` 指向示例文件。新协议放在 `include/src/protocol/hand` 或 `gripper`，必须 `REGISTER_PROTOCOL`、工厂显式分支（不要落到默认 RH5DG2）、并补 gtest。README 机型节只留启动短入口，话题表和自检写 `docs/<机型>_ROS2_API.md`。
+摘要：新机型只加 `*_example.yaml`；启动用现有 `inspire_control_single_device.launch.py` 按机型指向示例文件。新协议放在 `include/src/protocol/hand` 或 `gripper`，必须 `REGISTER_PROTOCOL`、工厂显式分支（不要落到默认 RH5DG2）、并补 gtest。README 机型节只留启动短入口，话题表和自检写 `docs/<机型>_ROS2_API.md`。
 
 driver 侧 RH5DG2 / RH56F1 遗留文件名已统一为 `*_example.yaml`（`git mv` 保留历史）。裸库 `src/inspire_serial_core/config/` 里给非 ROS 示例用的短名 `RH5DG2.yaml` / `RH56F1.yaml` 未改，避免搅动 `examples/main.cpp`。后续若再加机型，只新增一对 example，不要再引入 `device_protocol_config_<model>.yaml` 这种旧别名。
 
 ---
 
-**文档版本**：v1.5  
-**最后更新**：2026-09-10（README 再瘦：4C2 下沉；依赖/架构改短链）
+**文档版本**：v1.6  
+**最后更新**：2026-09-11（补齐 F1 / DG2 / DFX 的 ROS2 API；启动按机型自选 `*_example.yaml`）
